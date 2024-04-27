@@ -3,12 +3,11 @@ import {
   type ComponentProps,
   type FormEventHandler,
   type MouseEventHandler,
-  type ReactEventHandler,
 } from "react"
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
-import { VideoControls } from "./video-controls"
+import { PauseIcon, PlayIcon } from "./icons"
 
 export type VideoProps = ComponentProps<"video"> & {
   fileName: string
@@ -22,7 +21,7 @@ export const VideoPreview = ({
   ...props
 }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const seekBarRer = useRef<HTMLInputElement>(null)
+  const seekBarRef = useRef<HTMLInputElement>(null)
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
   const togglePlay = () => {
@@ -37,17 +36,33 @@ export const VideoPreview = ({
 
   const debouncedPlay = useDebounced(play, 1000)
 
-  const syncSliderWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
-    if (!seekBarRer.current || !videoRef.current) return
-    const value =
-      (100 / videoRef.current.duration) * videoRef.current.currentTime
-    seekBarRer.current.value = String(value)
+  const syncSliderWithVideoValue = () => {
+    if (!seekBarRef.current || !videoRef.current) return
+
+    const updateSlider = () => {
+      if (seekBarRef.current && videoRef.current) {
+        const value =
+          (100 / videoRef.current.duration) * videoRef.current.currentTime
+        seekBarRef.current.value = value.toFixed(2) // Adjust precision
+      }
+    }
+
+    const animateSlider = () => {
+      updateSlider()
+      if (isPlaying) {
+        requestAnimationFrame(animateSlider) // Continuous update while playing
+      }
+    }
+
+    if (isPlaying) {
+      requestAnimationFrame(animateSlider)
+    }
   }
 
   const syncVideoWithSliderValue: FormEventHandler<HTMLInputElement> = () => {
-    if (!seekBarRer.current || !videoRef.current) return
+    if (!seekBarRef.current || !videoRef.current) return
     const time =
-      videoRef.current.duration * (Number(seekBarRer.current.value) / 100)
+      videoRef.current.duration * (Number(seekBarRef.current.value) / 100)
     videoRef.current.currentTime = time
   }
 
@@ -60,7 +75,6 @@ export const VideoPreview = ({
     if (e.key === " " || e.code === "Space") {
       togglePlay()
     }
-    // if (e.code === "")
   })
 
   return (
@@ -80,14 +94,20 @@ export const VideoPreview = ({
         <source src={src} />
         <p>Your browser doesn't support HTML5 video.</p>
       </video>
-      <VideoControls isPlaying={isPlaying} />
+      <button
+        tabIndex={-1}
+        onClick={togglePlay}
+        className="peer invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full p-3 backdrop-blur-xl hover:visible peer-hover:visible"
+      >
+        {isPlaying ? <PauseIcon /> : <PlayIcon />}
+      </button>
       <div className="relative flex h-16 w-full justify-between overflow-clip rounded-xl border-[1px]">
         <input
           min="0"
           max="100"
-          step="1"
+          step="0.01"
           type="range"
-          ref={seekBarRer}
+          ref={seekBarRef}
           onInput={syncVideoWithSliderValue}
           onMouseDown={onMouseDown}
           onChange={debouncedPlay}
