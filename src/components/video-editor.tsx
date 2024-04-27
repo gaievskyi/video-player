@@ -10,11 +10,13 @@ export const VideoEditor = ({}: VideoEditorProps) => {
   const [fileName, setFileName] = useState("")
   const [frames, setFrames] = useState<Array<string>>([])
   const [status, setStatus] = useState<"IDLE" | "LOADING">("IDLE")
+
   const isLoadingFrames = status === "LOADING"
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (
     event,
   ) => {
+    document.body.style.cursor = "wait"
     setStatus("LOADING")
     const file = event.target.files?.item(0)
     if (file instanceof File) {
@@ -28,26 +30,25 @@ export const VideoEditor = ({}: VideoEditorProps) => {
       setFileName(file.name)
       setSource(url)
       setStatus("IDLE")
+      document.body.style.cursor = "auto"
     }
   }
 
   return (
-    <div className="container flex max-w-2xl flex-col items-center justify-center p-4">
-      <div className="relative flex flex-col items-center justify-center gap-12">
-        {source.length > 1 ? (
-          <VideoPreview fileName={fileName} src={source} frames={frames} />
-        ) : isLoadingFrames ? (
-          <Skeletons />
-        ) : (
-          <VideoUploadInput onChange={handleFileChange} />
-        )}
-      </div>
+    <div className="relative flex max-w-2xl flex-col items-center justify-center gap-12 p-4">
+      {source.length > 1 ? (
+        <VideoPreview fileName={fileName} src={source} frames={frames} />
+      ) : isLoadingFrames ? (
+        <Skeletons />
+      ) : (
+        <VideoUploadInput onChange={handleFileChange} />
+      )}
     </div>
   )
 }
 
 const Skeletons = () => (
-  <div className="relative flex flex-col items-center justify-between gap-12">
+  <div className="relative flex max-w-2xl flex-col items-center justify-between gap-12">
     <div className="h-[25px] w-1/3 animate-pulse rounded-full bg-card" />
     <div className="h-[360px] w-[640px] animate-pulse rounded-[2cqw] bg-card" />
     <div className="h-[64px] w-full animate-pulse rounded-xl bg-card" />

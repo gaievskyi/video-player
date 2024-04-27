@@ -7,6 +7,7 @@ import {
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
+import { videoFileRegex } from "~/lib/utils"
 import { PauseIcon, PlayIcon } from "./icons"
 
 export type VideoProps = ComponentProps<"video"> & {
@@ -24,6 +25,11 @@ export const VideoPreview = ({
   const seekBarRef = useRef<HTMLInputElement>(null)
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
+  const [extension] = fileName.match(videoFileRegex) ?? []
+  const fileNameWithoutExtension = extension
+    ? fileName.replace(extension, "")
+    : fileName
+
   const togglePlay = () => {
     isPlaying ? videoRef.current?.pause() : videoRef.current?.play()
     toggleIsPlaying()
@@ -37,14 +43,11 @@ export const VideoPreview = ({
   const debouncedPlay = useDebounced(play, 1000)
 
   const syncSliderWithVideoValue = () => {
-    if (!seekBarRef.current || !videoRef.current) return
-
     const updateSlider = () => {
-      if (seekBarRef.current && videoRef.current) {
-        const value =
-          (100 / videoRef.current.duration) * videoRef.current.currentTime
-        seekBarRef.current.value = value.toFixed(2)
-      }
+      if (!seekBarRef.current || !videoRef.current) return
+      const value =
+        (100 / videoRef.current.duration) * videoRef.current.currentTime
+      seekBarRef.current.value = value.toFixed(2)
     }
 
     const animateSlider = () => {
@@ -79,7 +82,12 @@ export const VideoPreview = ({
 
   return (
     <>
-      <p className="w-[200px] truncate text-center">{fileName}</p>
+      <div className="inline-flex text-center">
+        <span className="max-w-[200px] truncate">
+          {fileNameWithoutExtension}
+        </span>
+        <span>{extension}</span>
+      </div>
       <video
         onTimeUpdate={syncSliderWithVideoValue}
         ref={videoRef}
@@ -101,7 +109,7 @@ export const VideoPreview = ({
       >
         {isPlaying ? <PauseIcon /> : <PlayIcon />}
       </button>
-      <div className="relative flex h-16 w-full justify-between overflow-clip rounded-xl">
+      <div className="relative flex h-16 w-full justify-between overflow-clip rounded-xl bg-card">
         <input
           min="0"
           max="100"
@@ -111,7 +119,7 @@ export const VideoPreview = ({
           onInput={syncVideoWithSliderValue}
           onMouseDown={onMouseDown}
           onChange={debouncedPlay}
-          className="absolute z-10 h-full w-full"
+          className="absolute z-10 h-full w-full will-change-transform"
         />
         {frames.map((frame, index) => (
           <img
