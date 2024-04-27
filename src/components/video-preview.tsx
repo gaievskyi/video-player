@@ -43,14 +43,14 @@ export const VideoPreview = ({
       if (seekBarRef.current && videoRef.current) {
         const value =
           (100 / videoRef.current.duration) * videoRef.current.currentTime
-        seekBarRef.current.value = value.toFixed(2) // Adjust precision
+        seekBarRef.current.value = value.toFixed(2)
       }
     }
 
     const animateSlider = () => {
       updateSlider()
       if (isPlaying) {
-        requestAnimationFrame(animateSlider) // Continuous update while playing
+        requestAnimationFrame(animateSlider)
       }
     }
 
@@ -101,7 +101,7 @@ export const VideoPreview = ({
       >
         {isPlaying ? <PauseIcon /> : <PlayIcon />}
       </button>
-      <div className="relative flex h-16 w-full justify-between overflow-clip rounded-xl border-[1px]">
+      <div className="relative flex h-16 w-full justify-between overflow-clip rounded-xl">
         <input
           min="0"
           max="100"

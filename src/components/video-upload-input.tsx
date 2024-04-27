@@ -6,7 +6,7 @@ export const VideoUploadInput = ({ onChange }: VideoUploadInputProps) => {
   return (
     <label
       htmlFor="dropzone-file"
-      className="bg-card hover:bg-card/80 flex h-32 w-64 cursor-pointer flex-col items-center justify-center rounded-xl transition-colors"
+      className="flex h-32 w-64 cursor-pointer flex-col items-center justify-center rounded-xl bg-card transition-colors hover:bg-card/80"
     >
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
         <svg

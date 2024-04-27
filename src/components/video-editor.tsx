@@ -1,6 +1,5 @@
 import { useState, type ChangeEventHandler } from "react"
 import { VideoToFrames, VideoToFramesMethod } from "~/lib/video-to-frames"
-import { CloseIcon } from "./icons"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
 
@@ -32,21 +31,9 @@ export const VideoEditor = ({}: VideoEditorProps) => {
     }
   }
 
-  const close = () => {
-    setSource("")
-  }
-
   return (
-    <div className="container mx-auto flex max-w-2xl flex-col p-4">
-      {(source.length > 1 || isLoadingFrames) && (
-        <button
-          onClick={close}
-          className="mb-6 grid w-12 place-items-center self-end rounded-xl border-red-500 bg-card p-4 transition-colors hover:bg-card/80"
-        >
-          <CloseIcon />
-        </button>
-      )}
-      <div className="relative flex flex-col items-center justify-center gap-4">
+    <div className="container flex max-w-2xl flex-col items-center justify-center p-4">
+      <div className="relative flex flex-col items-center justify-center gap-12">
         {source.length > 1 ? (
           <VideoPreview fileName={fileName} src={source} frames={frames} />
         ) : isLoadingFrames ? (
@@ -60,7 +47,7 @@ export const VideoEditor = ({}: VideoEditorProps) => {
 }
 
 const Skeletons = () => (
-  <div className="flex flex-col items-center justify-between gap-4">
+  <div className="relative flex flex-col items-center justify-between gap-12">
     <div className="h-[25px] w-1/3 animate-pulse rounded-full bg-card" />
     <div className="h-[360px] w-[640px] animate-pulse rounded-[2cqw] bg-card" />
     <div className="h-[64px] w-full animate-pulse rounded-xl bg-card" />
