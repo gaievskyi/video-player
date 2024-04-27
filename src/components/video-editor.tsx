@@ -42,12 +42,12 @@ export const VideoEditor = ({}: VideoEditorProps) => {
       {(source.length > 1 || isLoadingFrames) && (
         <button
           onClick={close}
-          className="grid w-12 place-items-center self-end rounded-xl border-red-500 bg-card p-4 transition-colors hover:bg-card/80"
+          className="mb-6 grid w-12 place-items-center self-end rounded-xl border-red-500 bg-card p-4 transition-colors hover:bg-card/80"
         >
           <CloseIcon />
         </button>
       )}
-      <div className="flex flex-col items-center justify-center gap-4">
+      <div className="relative flex flex-col items-center justify-center gap-4">
         {source.length > 1 ? (
           <>
             <VideoPreview fileName={fileName} src={source} />
@@ -64,9 +64,9 @@ export const VideoEditor = ({}: VideoEditorProps) => {
 }
 
 const Skeletons = () => (
-  <>
-    <div className="h-[16px] w-1/4 animate-pulse rounded-full bg-card" />
-    <div className="h-[400px] w-[640px] animate-pulse rounded-[2cqw] bg-card" />
+  <div className="flex flex-col items-center justify-between gap-4">
+    <div className="h-[25px] w-1/3 animate-pulse rounded-full bg-card" />
+    <div className="h-[360px] w-[640px] animate-pulse rounded-[2cqw] bg-card" />
     <div className="h-[64px] w-full animate-pulse rounded-xl bg-card" />
-  </>
+  </div>
 )
