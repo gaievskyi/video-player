@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "ffmpeg-extract-frames": "^2.0.2",
+    "lodash.debounce": "^4.0.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

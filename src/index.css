@@ -32,3 +32,55 @@ body {
   min-width: 320px;
   min-height: 100svh;
 }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Removes default focus */
+input[type="range"]:focus {
+  outline: none;
+}
+
+/***** Chrome, Safari, Opera and Edge Chromium styles *****/
+/* slider track */
+input[type="range"]::-webkit-slider-runnable-track {
+  background-color: transparent;
+  height: 100%;
+  width: 100%;
+}
+
+/* slider thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  margin-top: 3px;
+  background-color: white;
+  height: 3.5rem;
+  width: 4px;
+  border-radius: 9999px;
+  transition: all 0.5s ease;
+}
+
+/******** Firefox styles ********/
+/* slider track */
+input[type="range"]::-moz-range-track {
+  background-color: transparent;
+  height: 100%;
+  width: 100%;
+}
+
+/* slider thumb */
+input[type="range"]::-moz-range-thumb {
+  border: none; /*Removes extra border that FF applies*/
+  appearance: none;
+  margin-top: 3px;
+  background-color: white;
+  height: 3.5rem;
+  width: 4px;
+  border-radius: 9999px;
+  transition: all 0.5s ease;
+}

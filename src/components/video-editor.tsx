@@ -2,7 +2,6 @@ import { useState, type ChangeEventHandler } from "react"
 import { VideoToFrames, VideoToFramesMethod } from "~/lib/video-to-frames"
 import { CloseIcon } from "./icons"
 import { VideoPreview } from "./video-preview"
-import { VideoTimeline } from "./video-timeline"
 import { VideoUploadInput } from "./video-upload-input"
 
 type VideoEditorProps = {}
@@ -23,7 +22,7 @@ export const VideoEditor = ({}: VideoEditorProps) => {
       const url = URL.createObjectURL(file)
       const frames = await VideoToFrames.getFrames(
         url,
-        15,
+        25,
         VideoToFramesMethod.totalFrames,
       )
       setFrames(frames)
@@ -49,10 +48,7 @@ export const VideoEditor = ({}: VideoEditorProps) => {
       )}
       <div className="relative flex flex-col items-center justify-center gap-4">
         {source.length > 1 ? (
-          <>
-            <VideoPreview fileName={fileName} src={source} />
-            <VideoTimeline frames={frames} />
-          </>
+          <VideoPreview fileName={fileName} src={source} frames={frames} />
         ) : isLoadingFrames ? (
           <Skeletons />
         ) : (
