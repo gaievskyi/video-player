@@ -8,29 +8,21 @@ import {
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
-import { formatTime, videoFileRegex } from "~/lib/utils"
-import type { Frame } from "~/lib/video-to-frames"
+import { formatTime } from "~/lib/utils"
 import { PauseIcon, PlayIcon } from "./icons"
+import { useVideoEditorContext } from "./video-editor-context"
 
-export type VideoProps = ComponentProps<"video"> & {
-  fileName: string
-  frames: Array<Frame>
-}
+export type VideoProps = ComponentProps<"video">
 
-export const VideoPreview = ({
-  src,
-  fileName,
-  frames,
-  ...props
-}: VideoProps) => {
+export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const seekRef = useRef<HTMLInputElement>(null)
   const startRef = useRef<HTMLInputElement>(null)
   const endRef = useRef<HTMLInputElement>(null)
 
+  const { fileName, extension, frames } = useVideoEditorContext()
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
-  const [extension] = fileName.match(videoFileRegex) ?? []
   const fileNameWithoutExtension = extension
     ? fileName.replace(extension, "")
     : fileName
@@ -40,20 +32,18 @@ export const VideoPreview = ({
     toggleIsPlaying()
   }
 
-  const play = () => {
+  const play = (): void => {
     videoRef.current?.play()
     setIsPlaying(true)
   }
 
-  const updateSliderLabel = () => {
+  const updateSliderLabel = (): void => {
     if (!seekRef.current || !videoRef.current) return
     const slider = seekRef.current
     const value = parseFloat(slider.value)
     const sliderWidth = slider.clientWidth
-    const thumbWidth = 5
     const thumbPosition = (sliderWidth * value) / 100
-    const labelPosition = thumbPosition - thumbWidth / 2
-    slider.style.setProperty("--label-position", `${labelPosition}px`)
+    slider.style.setProperty("--label-position", `${thumbPosition}px`)
   }
 
   const syncSliderWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {

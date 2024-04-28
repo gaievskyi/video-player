@@ -4,14 +4,13 @@ import {
   VideoToFramesMethod,
   type Frame,
 } from "~/lib/video-to-frames"
+import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
 
-type VideoEditorProps = {}
-
-export const VideoEditor = ({}: VideoEditorProps) => {
-  const [source, setSource] = useState("")
-  const [fileName, setFileName] = useState("")
+export const VideoEditor = () => {
+  const [src, setSrc] = useState("")
+  const [fileName, setFileName] = useState(".mp4")
   const [frames, setFrames] = useState<Array<Frame>>([])
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
 
@@ -30,22 +29,29 @@ export const VideoEditor = ({}: VideoEditorProps) => {
       )
       setFrames(frames)
       setFileName(file.name)
-      setSource(url)
+      setSrc(url)
       setIsLoadingVideo(false)
       document.body.style.cursor = "auto"
     }
   }
 
   return (
-    <div className="relative flex max-w-2xl flex-col items-center justify-center gap-12 p-4">
-      {source.length > 1 ? (
-        <VideoPreview fileName={fileName} src={source} frames={frames} />
-      ) : isLoadingVideo ? (
-        <Skeletons />
-      ) : (
-        <VideoUploadInput onChange={handleFileChange} />
-      )}
-    </div>
+    <VideoEditorContextProvider
+      value={{
+        fileName,
+        frames,
+      }}
+    >
+      <div className="relative flex max-w-2xl flex-col items-center justify-center gap-12 p-4">
+        {src.length > 1 ? (
+          <VideoPreview src={src} />
+        ) : isLoadingVideo ? (
+          <Skeletons />
+        ) : (
+          <VideoUploadInput onChange={handleFileChange} />
+        )}
+      </div>
+    </VideoEditorContextProvider>
   )
 }
 
