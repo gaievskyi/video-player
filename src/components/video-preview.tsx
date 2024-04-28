@@ -113,6 +113,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           min="0"
           max="100"
           step="0.01"
+          defaultValue="0"
           type="range"
           ref={seekRef}
           onInput={syncVideoWithSliderValue}
