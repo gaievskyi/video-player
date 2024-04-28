@@ -1,5 +1,9 @@
 import { useState, type ChangeEventHandler } from "react"
-import { VideoToFrames, VideoToFramesMethod } from "~/lib/video-to-frames"
+import {
+  VideoToFrames,
+  VideoToFramesMethod,
+  type Frame,
+} from "~/lib/video-to-frames"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
 
@@ -8,16 +12,14 @@ type VideoEditorProps = {}
 export const VideoEditor = ({}: VideoEditorProps) => {
   const [source, setSource] = useState("")
   const [fileName, setFileName] = useState("")
-  const [frames, setFrames] = useState<Array<string>>([])
-  const [status, setStatus] = useState<"IDLE" | "LOADING">("IDLE")
-
-  const isLoadingFrames = status === "LOADING"
+  const [frames, setFrames] = useState<Array<Frame>>([])
+  const [isLoadingVideo, setIsLoadingVideo] = useState(false)
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (
     event,
   ) => {
+    setIsLoadingVideo(true)
     document.body.style.cursor = "wait"
-    setStatus("LOADING")
     const file = event.target.files?.item(0)
     if (file instanceof File) {
       const url = URL.createObjectURL(file)
@@ -29,7 +31,7 @@ export const VideoEditor = ({}: VideoEditorProps) => {
       setFrames(frames)
       setFileName(file.name)
       setSource(url)
-      setStatus("IDLE")
+      setIsLoadingVideo(false)
       document.body.style.cursor = "auto"
     }
   }
@@ -38,7 +40,7 @@ export const VideoEditor = ({}: VideoEditorProps) => {
     <div className="relative flex max-w-2xl flex-col items-center justify-center gap-12 p-4">
       {source.length > 1 ? (
         <VideoPreview fileName={fileName} src={source} frames={frames} />
-      ) : isLoadingFrames ? (
+      ) : isLoadingVideo ? (
         <Skeletons />
       ) : (
         <VideoUploadInput onChange={handleFileChange} />

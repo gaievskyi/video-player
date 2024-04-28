@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        card: "#262423"
-      }
+        card: "#262423",
+      },
     },
   },
   plugins: [],

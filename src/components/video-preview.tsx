@@ -3,16 +3,18 @@ import {
   type ComponentProps,
   type FormEventHandler,
   type MouseEventHandler,
+  type ReactEventHandler,
 } from "react"
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
 import { videoFileRegex } from "~/lib/utils"
+import type { Frame } from "~/lib/video-to-frames"
 import { PauseIcon, PlayIcon } from "./icons"
 
 export type VideoProps = ComponentProps<"video"> & {
   fileName: string
-  frames: Array<string>
+  frames: Array<Frame>
 }
 
 export const VideoPreview = ({
@@ -22,7 +24,10 @@ export const VideoPreview = ({
   ...props
 }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const seekBarRef = useRef<HTMLInputElement>(null)
+  const seekRef = useRef<HTMLInputElement>(null)
+  const startRef = useRef<HTMLInputElement>(null)
+  const endRef = useRef<HTMLInputElement>(null)
+
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
   const [extension] = fileName.match(videoFileRegex) ?? []
@@ -30,24 +35,22 @@ export const VideoPreview = ({
     ? fileName.replace(extension, "")
     : fileName
 
-  const togglePlay = () => {
+  const togglePlay = (): void => {
     isPlaying ? videoRef.current?.pause() : videoRef.current?.play()
     toggleIsPlaying()
   }
 
-  const play = () => {
+  const play = useDebounced(() => {
     videoRef.current?.play()
     setIsPlaying(true)
-  }
+  }, 350)
 
-  const debouncedPlay = useDebounced(play, 1000)
-
-  const syncSliderWithVideoValue = () => {
+  const syncSliderWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
     const updateSlider = () => {
-      if (!seekBarRef.current || !videoRef.current) return
+      if (!seekRef.current || !videoRef.current) return
       const value =
         (100 / videoRef.current.duration) * videoRef.current.currentTime
-      seekBarRef.current.value = value.toFixed(2)
+      seekRef.current.value = value.toFixed(2)
     }
 
     const animateSlider = () => {
@@ -63,9 +66,10 @@ export const VideoPreview = ({
   }
 
   const syncVideoWithSliderValue: FormEventHandler<HTMLInputElement> = () => {
-    if (!seekBarRef.current || !videoRef.current) return
+    if (!seekRef.current || !videoRef.current) return
     const time =
-      videoRef.current.duration * (Number(seekBarRef.current.value) / 100)
+      videoRef.current.duration * (Number(seekRef.current.value) / 100)
+    seekRef.current.setAttribute("current-time", time.toFixed(2))
     videoRef.current.currentTime = time
   }
 
@@ -74,8 +78,13 @@ export const VideoPreview = ({
     setIsPlaying(false)
   }
 
+  const onMouseUp: MouseEventHandler<HTMLInputElement> = () => {
+    play()
+  }
+
   useEventListener("keydown", (e) => {
     if (e.key === " " || e.code === "Space") {
+      e.preventDefault()
       togglePlay()
     }
   })
@@ -88,10 +97,11 @@ export const VideoPreview = ({
         </span>
         <span>{extension}</span>
       </div>
+
       <video
-        onTimeUpdate={syncSliderWithVideoValue}
         ref={videoRef}
         onClick={togglePlay}
+        onTimeUpdate={syncSliderWithVideoValue}
         className="peer relative w-full cursor-pointer rounded-[2cqw]"
         playsInline
         autoPlay
@@ -102,32 +112,36 @@ export const VideoPreview = ({
         <source src={src} />
         <p>Your browser doesn't support HTML5 video.</p>
       </video>
+
       <button
         tabIndex={-1}
         onClick={togglePlay}
-        className="peer invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full p-3 backdrop-blur-xl hover:visible peer-hover:visible"
+        className="invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:visible peer-hover:visible"
       >
         {isPlaying ? <PauseIcon /> : <PlayIcon />}
       </button>
-      <div className="relative flex h-16 w-full justify-between overflow-clip rounded-xl bg-card">
+
+      <div className="relative flex h-16 justify-between rounded-xl bg-card">
         <input
+          id="seek"
           min="0"
           max="100"
           step="0.01"
           type="range"
-          ref={seekBarRef}
+          ref={seekRef}
           onInput={syncVideoWithSliderValue}
           onMouseDown={onMouseDown}
-          onChange={debouncedPlay}
-          className="absolute z-10 h-full w-full will-change-transform"
+          onMouseUp={onMouseUp}
+          className="seek peer absolute z-10 after:absolute after:top-0 after:content-[attr(current-time)]"
         />
-        {frames.map((frame, index) => (
+
+        {frames.map((frame) => (
           <img
-            draggable="false"
-            key={index + " frame"}
-            src={frame}
+            draggable={false}
+            key={frame.id}
+            src={frame.src}
             alt="Frame"
-            className="pointer-events-none max-w-[25px] select-none object-cover"
+            className="pointer-events-none max-w-[25px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
           />
         ))}
       </div>
