@@ -7,3 +7,11 @@ export const lerp = (start: number, end: number, amt: number) =>
   (1 - amt) * start + amt * end
 
 export const videoFileRegex = /\.(mp4|mov)$/i
+
+export const formatTime = (seconds: number) => {
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+  const milliseconds = Math.floor((seconds - Math.floor(seconds)) * 100)
+
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}:${String(milliseconds).padStart(2, "0")}`
+}

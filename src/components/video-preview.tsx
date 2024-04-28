@@ -8,7 +8,7 @@ import {
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
-import { videoFileRegex } from "~/lib/utils"
+import { formatTime, videoFileRegex } from "~/lib/utils"
 import type { Frame } from "~/lib/video-to-frames"
 import { PauseIcon, PlayIcon } from "./icons"
 
@@ -65,7 +65,7 @@ export const VideoPreview = ({
       seekRef.current.value = time
       seekRef.current.setAttribute(
         "current-time",
-        videoRef.current.currentTime.toFixed(2),
+        formatTime(videoRef.current.currentTime),
       )
       updateSliderLabel()
     }
