@@ -40,17 +40,34 @@ export const VideoPreview = ({
     toggleIsPlaying()
   }
 
-  const play = useDebounced(() => {
+  const play = () => {
     videoRef.current?.play()
     setIsPlaying(true)
-  }, 350)
+  }
+
+  const updateSliderLabel = () => {
+    if (!seekRef.current || !videoRef.current) return
+    const slider = seekRef.current
+    const value = parseFloat(slider.value)
+    const sliderWidth = slider.clientWidth
+    const thumbWidth = 5
+    const thumbPosition = (sliderWidth * value) / 100
+    const labelPosition = thumbPosition - thumbWidth / 2
+    slider.style.setProperty("--label-position", `${labelPosition}px`)
+  }
 
   const syncSliderWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
     const updateSlider = () => {
       if (!seekRef.current || !videoRef.current) return
       const value =
         (100 / videoRef.current.duration) * videoRef.current.currentTime
-      seekRef.current.value = value.toFixed(2)
+      const time = value.toFixed(2)
+      seekRef.current.value = time
+      seekRef.current.setAttribute(
+        "current-time",
+        videoRef.current.currentTime.toFixed(2),
+      )
+      updateSliderLabel()
     }
 
     const animateSlider = () => {
@@ -69,8 +86,8 @@ export const VideoPreview = ({
     if (!seekRef.current || !videoRef.current) return
     const time =
       videoRef.current.duration * (Number(seekRef.current.value) / 100)
-    seekRef.current.setAttribute("current-time", time.toFixed(2))
     videoRef.current.currentTime = time
+    updateSliderLabel()
   }
 
   const onMouseDown: MouseEventHandler<HTMLInputElement> = () => {
@@ -78,9 +95,9 @@ export const VideoPreview = ({
     setIsPlaying(false)
   }
 
-  const onMouseUp: MouseEventHandler<HTMLInputElement> = () => {
+  const onMouseUp: MouseEventHandler<HTMLInputElement> = useDebounced(() => {
     play()
-  }
+  }, 350)
 
   useEventListener("keydown", (e) => {
     if (e.key === " " || e.code === "Space") {
@@ -132,7 +149,7 @@ export const VideoPreview = ({
           onInput={syncVideoWithSliderValue}
           onMouseDown={onMouseDown}
           onMouseUp={onMouseUp}
-          className="seek peer absolute z-10 after:absolute after:top-0 after:content-[attr(current-time)]"
+          className="seek peer absolute z-30 after:absolute after:-top-8 after:left-[var(--label-position)] after:-translate-x-1/2 after:rounded-full after:bg-white after:px-2 after:text-xs after:font-medium after:tabular-nums after:text-black after:content-[attr(current-time)]"
         />
 
         {frames.map((frame) => (
@@ -141,7 +158,7 @@ export const VideoPreview = ({
             key={frame.id}
             src={frame.src}
             alt="Frame"
-            className="pointer-events-none max-w-[25px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
+            className="pointer-events-none z-20 max-w-[25px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
           />
         ))}
       </div>
