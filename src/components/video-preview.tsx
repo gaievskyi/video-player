@@ -9,23 +9,19 @@ import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
 import { formatTime } from "~/lib/utils"
+import { Frames } from "./frames"
 import { PauseIcon, PlayIcon } from "./icons"
-import { useVideoEditorContext } from "./video-editor-context"
+import { VideoPreviewHeader } from "./video-preview-header"
 
 export type VideoProps = ComponentProps<"video">
 
 export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const seekRef = useRef<HTMLInputElement>(null)
-  const startRef = useRef<HTMLInputElement>(null)
-  const endRef = useRef<HTMLInputElement>(null)
+  // const startRef = useRef<HTMLInputElement>(null)
+  // const endRef = useRef<HTMLInputElement>(null)
 
-  const { fileName, extension, frames } = useVideoEditorContext()
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
-
-  const fileNameWithoutExtension = extension
-    ? fileName.replace(extension, "")
-    : fileName
 
   const togglePlay = (): void => {
     isPlaying ? videoRef.current?.pause() : videoRef.current?.play()
@@ -37,27 +33,16 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     setIsPlaying(true)
   }
 
-  const updateSliderLabel = (): void => {
-    if (!seekRef.current || !videoRef.current) return
-    const slider = seekRef.current
-    const value = parseFloat(slider.value)
-    const sliderWidth = slider.clientWidth
-    const thumbPosition = (sliderWidth * value) / 100
-    slider.style.setProperty("--label-position", `${thumbPosition}px`)
-  }
-
   const syncSliderWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
     const updateSlider = () => {
       if (!seekRef.current || !videoRef.current) return
-      const value =
-        (100 / videoRef.current.duration) * videoRef.current.currentTime
-      const time = value.toFixed(2)
-      seekRef.current.value = time
-      seekRef.current.setAttribute(
-        "current-time",
-        formatTime(videoRef.current.currentTime),
-      )
-      updateSliderLabel()
+      const slider = seekRef.current
+      const video = videoRef.current
+      const value = (100 / video.duration) * video.currentTime
+      slider.value = value.toFixed(2)
+      slider.setAttribute("current-time", formatTime(video.currentTime))
+      const thumbPosition = (slider.clientWidth * value) / 100
+      slider.style.setProperty("--label-position", `${thumbPosition}px`)
     }
 
     const animateSlider = () => {
@@ -74,10 +59,10 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
 
   const syncVideoWithSliderValue: FormEventHandler<HTMLInputElement> = () => {
     if (!seekRef.current || !videoRef.current) return
-    const time =
-      videoRef.current.duration * (Number(seekRef.current.value) / 100)
-    videoRef.current.currentTime = time
-    updateSliderLabel()
+    const slider = seekRef.current
+    const video = videoRef.current
+    const time = video.duration * (Number(slider.value) / 100)
+    video.currentTime = time
   }
 
   const onMouseDown: MouseEventHandler<HTMLInputElement> = () => {
@@ -98,13 +83,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
 
   return (
     <>
-      <div className="inline-flex text-center">
-        <span className="max-w-[200px] truncate">
-          {fileNameWithoutExtension}
-        </span>
-        <span>{extension}</span>
-      </div>
-
+      <VideoPreviewHeader />
       <video
         ref={videoRef}
         onClick={togglePlay}
@@ -141,16 +120,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           onMouseUp={onMouseUp}
           className="seek peer absolute z-30 after:absolute after:-top-8 after:left-[var(--label-position)] after:-translate-x-1/2 after:rounded-full after:bg-white after:px-2 after:text-xs after:font-medium after:tabular-nums after:text-black after:content-[attr(current-time)]"
         />
-
-        {frames.map((frame) => (
-          <img
-            draggable={false}
-            key={frame.id}
-            src={frame.src}
-            alt="Frame"
-            className="pointer-events-none z-20 max-w-[25px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
-          />
-        ))}
+        <Frames />
       </div>
     </>
   )
