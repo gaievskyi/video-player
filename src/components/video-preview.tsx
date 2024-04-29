@@ -38,35 +38,35 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     setIsPlaying(true)
   }
 
-  const syncSliderWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
-    const updateSlider = () => {
+  const syncSeekWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
+    const updateSeek = () => {
       if (!seekRef.current || !videoRef.current) return
-      const slider = seekRef.current
+      const seek = seekRef.current
       const video = videoRef.current
       const value = (100 / video.duration) * video.currentTime
-      slider.value = value.toFixed(2)
-      slider.setAttribute("current-time", formatTime(video.currentTime))
-      const thumbPosition = (slider.clientWidth * value) / 100
-      slider.style.setProperty("--label-position", `${thumbPosition}px`)
+      seek.value = value.toFixed(2)
+      seek.setAttribute("current-time", formatTime(video.currentTime))
+      const thumbPosition = (seek.clientWidth * value) / 100
+      seek.style.setProperty("--label-position", `${thumbPosition}px`)
     }
 
-    const animateSlider = () => {
-      updateSlider()
+    const animateSeek = () => {
+      updateSeek()
       if (isPlaying) {
-        requestAnimationFrame(animateSlider)
+        requestAnimationFrame(animateSeek)
       }
     }
 
     if (isPlaying) {
-      requestAnimationFrame(animateSlider)
+      requestAnimationFrame(animateSeek)
     }
   }
 
-  const syncVideoWithSliderValue: FormEventHandler<HTMLInputElement> = () => {
+  const syncVideoWithSeekValue: FormEventHandler<HTMLInputElement> = () => {
     if (!seekRef.current || !videoRef.current) return
-    const slider = seekRef.current
+    const seek = seekRef.current
     const video = videoRef.current
-    const time = video.duration * (Number(slider.value) / 100)
+    const time = video.duration * (Number(seek.value) / 100)
     video.currentTime = time
   }
 
@@ -79,14 +79,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     play()
   }, 350)
 
-  useEventListener("keydown", (e) => {
-    if (e.key === " " || e.code === "Space") {
-      e.preventDefault()
-      togglePlay()
-    }
-  })
-
-  const dragTrimmer = (e: React.MouseEvent, isEnd: boolean): void => {
+  const onTrim = (e: React.MouseEvent, isEnd: boolean): void => {
     if (!videoRef.current) return
     e.preventDefault()
     const trimmer = videoRef.current
@@ -109,6 +102,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     }
 
     const onDragEnd = () => {
+      if (!videoRef.current) return
       document.removeEventListener("mousemove", onDrag)
       document.removeEventListener("mouseup", onDragEnd)
     }
@@ -117,13 +111,27 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     document.addEventListener("mouseup", onDragEnd)
   }
 
+  const trimVideo = (): void => {
+    if (!videoRef.current) return
+    const start = (videoRef.current.duration * trimStart) / 100
+    videoRef.current.currentTime = start
+    play()
+  }
+
+  useEventListener("keydown", (e) => {
+    if (e.key === " " || e.code === "Space") {
+      e.preventDefault()
+      togglePlay()
+    }
+  })
+
   return (
     <>
       <VideoPreviewHeader />
       <video
         ref={videoRef}
         onClick={togglePlay}
-        onTimeUpdate={syncSliderWithVideoValue}
+        onTimeUpdate={syncSeekWithVideoValue}
         className="peer relative w-full cursor-pointer rounded-[2cqw]"
         playsInline
         autoPlay
@@ -151,7 +159,8 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           style={{ left: `${trimStart}%`, width: `${trimEnd - trimStart}%` }}
         >
           <div
-            onMouseDown={(e) => dragTrimmer(e, false)}
+            onMouseDown={(e) => onTrim(e, false)}
+            onMouseUp={trimVideo}
             ref={trimStartRef}
             id="trim-start"
             className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
@@ -160,7 +169,8 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
             <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
           </div>
           <div
-            onMouseDown={(e) => dragTrimmer(e, true)}
+            onMouseDown={(e) => onTrim(e, true)}
+            onMouseUp={trimVideo}
             ref={trimEndRef}
             id="trim-end"
             className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
@@ -177,7 +187,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           defaultValue="0"
           type="range"
           ref={seekRef}
-          onInput={syncVideoWithSliderValue}
+          onInput={syncVideoWithSeekValue}
           onMouseDown={onMouseDown}
           onMouseUp={onMouseUp}
           className="seek absolute z-10"

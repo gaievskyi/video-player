@@ -17,36 +17,34 @@ export class VideoToFrames {
     amount: number,
     type: VideoToFramesMethod = VideoToFramesMethod.fps,
   ): Promise<Frame[]> {
-    return new Promise(
-      (resolve: (frames: Frame[]) => void, reject: (error: string) => void) => {
-        const frames: { id: string; src: string }[] = []
-        const canvas: HTMLCanvasElement = document.createElement("canvas")
-        const context = canvas.getContext("2d")!
-        let duration = 0
+    return new Promise((resolve: (frames: Frame[]) => void) => {
+      const frames: { id: string; src: string }[] = []
+      const canvas: HTMLCanvasElement = document.createElement("canvas")
+      const context = canvas.getContext("2d")!
+      let duration = 0
 
-        const video = document.createElement("video")
-        video.preload = "auto"
-        let that = this
+      const video = document.createElement("video")
+      video.preload = "auto"
+      let that = this
 
-        video.addEventListener("loadeddata", async function () {
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          duration = video.duration
-          let totalFrames = amount
-          if (type === VideoToFramesMethod.fps) {
-            totalFrames = duration * amount
-          }
-          for (let time = 0; time < duration; time += duration / totalFrames) {
-            const id = window.crypto.randomUUID()
-            const src = await that.getVideoFrame(video, context, canvas, time)
-            frames.push({ id, src })
-          }
-          resolve(frames)
-        })
-        video.src = videoUrl
-        video.load()
-      },
-    )
+      video.addEventListener("loadeddata", async function () {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        duration = video.duration
+        let totalFrames = amount
+        if (type === VideoToFramesMethod.fps) {
+          totalFrames = duration * amount
+        }
+        for (let time = 0; time < duration; time += duration / totalFrames) {
+          const id = window.crypto.randomUUID()
+          const src = await that.getVideoFrame(video, context, canvas, time)
+          frames.push({ id, src })
+        }
+        resolve(frames)
+      })
+      video.src = videoUrl
+      video.load()
+    })
   }
 
   private static getVideoFrame(
