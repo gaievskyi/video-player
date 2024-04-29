@@ -28,7 +28,7 @@ export const VideoUploadInput = ({ onChange }: VideoUploadInputProps) => {
           Open video
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Any video file format
+          .mp4, .webm, or .ogg
         </p>
       </div>
       <input

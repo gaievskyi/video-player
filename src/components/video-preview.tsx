@@ -96,7 +96,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
         {...props}
       >
         <source src={src} />
-        <p>Your browser doesn't support HTML5 video.</p>
+        Your browser doesn't support <code>HTML5 video</code>
       </video>
 
       <button

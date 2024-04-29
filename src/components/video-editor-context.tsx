@@ -27,7 +27,10 @@ export const VideoEditorContextProvider = ({
 }: VideoEditorContextProviderProps) => {
   const { fileName } = value
   const [extension] = fileName.match(videoFileRegex) ?? []
-  if (!extension) throw new Error("File name prop must include extension")
+  if (!extension)
+    throw new Error(
+      "Filename prop must include extension (.mp4, .webm, or .ogg)",
+    )
   return (
     <VideoEditorContext.Provider
       value={{
