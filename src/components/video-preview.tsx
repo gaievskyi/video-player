@@ -18,8 +18,6 @@ export type VideoProps = ComponentProps<"video">
 export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const seekRef = useRef<HTMLInputElement>(null)
-  // const startRef = useRef<HTMLInputElement>(null)
-  // const endRef = useRef<HTMLInputElement>(null)
 
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
@@ -108,6 +106,26 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
       </button>
 
       <div className="relative flex h-16 justify-between rounded-xl bg-card">
+        <div
+          id="trimmer"
+          className="absolute bottom-0 z-20 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
+          style={{ left: "160px", width: "80px" }}
+        >
+          <div
+            id="trim-start"
+            className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
+            style={{ left: "-16px" }}
+          >
+            <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
+          </div>
+          <div
+            id="trim-end"
+            className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
+            style={{ right: "-16px" }}
+          >
+            <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
+          </div>
+        </div>
         <input
           id="seek"
           min="0"
@@ -119,7 +137,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           onInput={syncVideoWithSliderValue}
           onMouseDown={onMouseDown}
           onMouseUp={onMouseUp}
-          className="seek peer absolute z-30 after:absolute after:-top-8 after:left-[var(--label-position)] after:-translate-x-1/2 after:rounded-full after:bg-white after:px-2 after:text-xs after:font-medium after:tabular-nums after:text-black after:content-[attr(current-time)]"
+          className="seek absolute z-10"
         />
         <Frames />
       </div>

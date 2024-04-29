@@ -9,7 +9,7 @@ export const Frames = () => {
       key={frame.id}
       src={frame.src}
       alt="Frame"
-      className="pointer-events-none z-20 max-w-[25px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
+      className="pointer-events-none max-w-[25px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
     />
   ))
 }
