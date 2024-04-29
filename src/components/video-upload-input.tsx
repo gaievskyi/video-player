@@ -35,7 +35,7 @@ export const VideoUploadInput = ({ onChange }: VideoUploadInputProps) => {
         id="dropzone-file"
         onChange={onChange}
         type="file"
-        accept="video/*"
+        accept=".mp4,.webm,.ogg"
         className="hidden"
       />
     </label>
