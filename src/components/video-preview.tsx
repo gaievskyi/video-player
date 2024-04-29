@@ -1,5 +1,6 @@
 import {
   useRef,
+  useState,
   type ComponentProps,
   type FormEventHandler,
   type MouseEventHandler,
@@ -18,6 +19,12 @@ export type VideoProps = ComponentProps<"video">
 export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const seekRef = useRef<HTMLInputElement>(null)
+  const trimmerRef = useRef<HTMLDivElement>(null)
+  const trimStartRef = useRef<HTMLDivElement>(null)
+  const trimEndRef = useRef<HTMLDivElement>(null)
+
+  const [trimStart, setTrimStart] = useState(0)
+  const [trimEnd, setTrimEnd] = useState(100)
 
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
@@ -79,6 +86,37 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     }
   })
 
+  const dragTrimmer = (e: React.MouseEvent, isEnd: boolean): void => {
+    if (!videoRef.current) return
+    e.preventDefault()
+    const trimmer = videoRef.current
+    const startX = e.clientX
+    const initialLeft = isEnd ? trimEnd : trimStart
+
+    const onDrag = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX
+      const newPos = initialLeft + (delta / trimmer.clientWidth) * 100
+
+      if (isEnd) {
+        if (newPos <= 100 && newPos >= trimStart + 5) {
+          setTrimEnd(newPos)
+        }
+      } else {
+        if (newPos >= 0 && newPos <= trimEnd - 5) {
+          setTrimStart(newPos)
+        }
+      }
+    }
+
+    const onDragEnd = () => {
+      document.removeEventListener("mousemove", onDrag)
+      document.removeEventListener("mouseup", onDragEnd)
+    }
+
+    document.addEventListener("mousemove", onDrag)
+    document.addEventListener("mouseup", onDragEnd)
+  }
+
   return (
     <>
       <VideoPreviewHeader />
@@ -107,11 +145,14 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
 
       <div className="relative flex h-16 justify-between rounded-xl bg-card">
         <div
+          ref={trimmerRef}
           id="trimmer"
           className="absolute bottom-0 z-20 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
-          style={{ left: "160px", width: "80px" }}
+          style={{ left: `${trimStart}%`, width: `${trimEnd - trimStart}%` }}
         >
           <div
+            onMouseDown={(e) => dragTrimmer(e, false)}
+            ref={trimStartRef}
             id="trim-start"
             className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
             style={{ left: "-16px" }}
@@ -119,6 +160,8 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
             <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
           </div>
           <div
+            onMouseDown={(e) => dragTrimmer(e, true)}
+            ref={trimEndRef}
             id="trim-end"
             className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
             style={{ right: "-16px" }}

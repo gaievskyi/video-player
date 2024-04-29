@@ -6,6 +6,9 @@ export { twMerge as cn } from "tailwind-merge"
 export const lerp = (start: number, end: number, amt: number) =>
   (1 - amt) * start + amt * end
 
+export const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max)
+
 export const videoFileRegex = /\.(mp4|webm|ogg)$/i
 
 export const formatTime = (seconds: number) => {
