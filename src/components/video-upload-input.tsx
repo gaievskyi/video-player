@@ -27,13 +27,15 @@ export const VideoUploadInput = ({ onChange }: VideoUploadInputProps) => {
         <p className="mb-1 text-sm font-bold text-gray-500 dark:text-gray-400">
           Open video
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">.mov, .mp4</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Any video file format
+        </p>
       </div>
       <input
         id="dropzone-file"
         onChange={onChange}
         type="file"
-        accept=".mov,.mp4"
+        accept="video/*"
         className="hidden"
       />
     </label>
