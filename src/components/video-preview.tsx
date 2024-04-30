@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useRef,
   useState,
   type ComponentProps,
@@ -104,6 +103,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
 
     const onDragEnd = () => {
       if (!videoRef.current) return
+      trimVideo()
       document.removeEventListener("mousemove", onDrag)
       document.removeEventListener("mouseup", onDragEnd)
     }
@@ -125,14 +125,6 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
       togglePlay()
     }
   })
-
-  useEffect(() => {
-    if (!videoRef.current) return
-    const video = videoRef.current
-    if (video.currentTime === end / 100) {
-      console.log("yes")
-    }
-  }, [])
 
   return (
     <>
@@ -169,7 +161,6 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
         >
           <div
             onMouseDown={(e) => onTrim(e, false)}
-            onMouseUp={trimVideo}
             ref={trimStartRef}
             id="trim-start"
             className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
@@ -179,7 +170,6 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           </div>
           <div
             onMouseDown={(e) => onTrim(e, true)}
-            onMouseUp={trimVideo}
             ref={trimEndRef}
             id="trim-end"
             className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
