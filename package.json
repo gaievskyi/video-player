@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "start": "bun preview",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "tsc && vite build && vite preview --host"
   },
   "dependencies": {
     "lodash.debounce": "^4.0.8",

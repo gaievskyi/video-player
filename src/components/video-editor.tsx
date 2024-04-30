@@ -42,7 +42,7 @@ export const VideoEditor = () => {
         frames,
       }}
     >
-      <div className="container relative m-auto flex h-full max-h-[100svh] min-h-[100svh] max-w-2xl flex-col items-center justify-center gap-12 px-6 py-4">
+      <div className="container relative m-auto flex h-full min-h-[100svh] max-w-2xl flex-col items-center justify-center gap-12 px-[115px] py-4 sm:px-4">
         {src.length > 1 ? (
           <VideoPreview src={src} />
         ) : isLoadingVideo ? (

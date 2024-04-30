@@ -8,7 +8,7 @@ export const Frames = () => {
       key={frame.id}
       src={frame.src}
       alt="Frame"
-      className="pointer-events-none max-w-[20px] select-none overflow-clip object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl sm:max-w-[30px]"
+      className="xs:max-w-[32px] pointer-events-none max-w-[23px] select-none object-cover first-of-type:rounded-l-xl last-of-type:rounded-r-xl"
     />
   ))
 }

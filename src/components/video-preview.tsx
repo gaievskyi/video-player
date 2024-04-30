@@ -130,10 +130,9 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     () => {
       if (!videoRef.current || !seekRef.current) return
       const video = videoRef.current
-      const currentVideoPosition = (video.currentTime / video.duration) * 100
+      const seek = seekRef.current
       const videoStart = (video.duration * start) / 100
-
-      if (currentVideoPosition >= end) {
+      if (seek.valueAsNumber >= end - 3) {
         video.currentTime = videoStart
         play()
       } else if (video.currentTime < videoStart) {
@@ -217,8 +216,10 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           onMouseUp={onMouseUp}
           className="seek absolute z-10"
         />
-        <div className="flex w-full justify-between overflow-hidden">
-          <Frames />
+        <div className="flex justify-between overflow-clip rounded-xl">
+          <div className="flex justify-between ">
+            <Frames />
+          </div>
         </div>
       </div>
     </>
