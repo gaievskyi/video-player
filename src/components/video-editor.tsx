@@ -24,7 +24,7 @@ export const VideoEditor = () => {
       const url = URL.createObjectURL(file)
       const frames = await VideoToFrames.getFrames(
         url,
-        25,
+        20,
         VideoToFramesMethod.totalFrames,
       )
       setFrames(frames)
@@ -42,7 +42,7 @@ export const VideoEditor = () => {
         frames,
       }}
     >
-      <div className="relative flex max-w-2xl flex-col items-center justify-center gap-12 p-4">
+      <div className="container relative m-auto flex h-full max-h-[100svh] min-h-[100svh] max-w-2xl flex-col items-center justify-center gap-12 px-6 py-4">
         {src.length > 1 ? (
           <VideoPreview src={src} />
         ) : isLoadingVideo ? (
@@ -56,9 +56,9 @@ export const VideoEditor = () => {
 }
 
 const Skeletons = () => (
-  <div className="relative flex max-w-2xl flex-col items-center justify-between gap-12">
+  <div className="container relative m-auto flex h-[100svh] max-w-2xl flex-col items-center justify-center gap-12 px-6 py-4">
     <div className="h-[25px] w-1/3 animate-pulse rounded-full bg-card" />
-    <div className="h-[360px] w-[640px] animate-pulse rounded-[2cqw] bg-card" />
-    <div className="h-[64px] w-full animate-pulse rounded-xl bg-card" />
+    <div className="h-[360px] w-[624px] animate-pulse rounded-[2cqw] bg-card" />
+    <div className="h-[64px] w-[650px] animate-pulse rounded-xl bg-card" />
   </div>
 )

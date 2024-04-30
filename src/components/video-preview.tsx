@@ -9,7 +9,7 @@ import {
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
-import { formatTime } from "~/lib/utils"
+import { cn, formatTime } from "~/lib/utils"
 import { Frames } from "./frames"
 import { PauseIcon, PlayIcon } from "./icons"
 import { VideoPreviewHeader } from "./video-preview-header"
@@ -168,16 +168,19 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
       <button
         tabIndex={-1}
         onClick={togglePlay}
-        className="invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:visible peer-hover:visible"
+        className={cn(
+          "invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full bg-black/50 p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:visible peer-hover:visible",
+          !isPlaying ? "visible" : "invisible",
+        )}
       >
         {isPlaying ? <PauseIcon /> : <PlayIcon />}
       </button>
 
-      <div className="relative flex h-16 justify-between rounded-xl bg-card">
+      <div className="container relative flex h-16 justify-between rounded-xl bg-card">
         <div
           ref={trimmerRef}
           id="trimmer"
-          className="absolute bottom-0  h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
+          className="absolute bottom-0 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
           style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
@@ -214,7 +217,9 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           onMouseUp={onMouseUp}
           className="seek absolute z-10"
         />
-        <Frames />
+        <div className="flex w-full justify-between overflow-hidden">
+          <Frames />
+        </div>
       </div>
     </>
   )

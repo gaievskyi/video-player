@@ -1,5 +1,9 @@
 import type { PropsWithChildren } from "react"
-import { createContext, useContext } from "use-context-selector"
+import {
+  createContext,
+  useContext,
+  useContextSelector,
+} from "use-context-selector"
 import { videoFileRegex } from "~/lib/utils"
 import type { Frame } from "~/lib/video-to-frames"
 
@@ -16,6 +20,8 @@ export const VideoEditorContext = createContext<VideoEditorContext>({
 })
 
 export const useVideoEditorContext = () => useContext(VideoEditorContext)
+export const useFrames = () =>
+  useContextSelector(VideoEditorContext, (state) => state.frames)
 
 type VideoEditorContextProviderProps = PropsWithChildren & {
   value: Omit<VideoEditorContext, "extension">
