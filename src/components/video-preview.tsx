@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type ComponentProps,
@@ -23,8 +24,8 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const trimStartRef = useRef<HTMLDivElement>(null)
   const trimEndRef = useRef<HTMLDivElement>(null)
 
-  const [trimStart, setTrimStart] = useState(0)
-  const [trimEnd, setTrimEnd] = useState(100)
+  const [start, setStart] = useState(0)
+  const [end, setEnd] = useState(100)
 
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
@@ -84,19 +85,19 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     e.preventDefault()
     const trimmer = videoRef.current
     const startX = e.clientX
-    const initialLeft = isEnd ? trimEnd : trimStart
+    const initialLeft = isEnd ? end : start
 
     const onDrag = (moveEvent: MouseEvent) => {
       const delta = moveEvent.clientX - startX
       const newPos = initialLeft + (delta / trimmer.clientWidth) * 100
 
       if (isEnd) {
-        if (newPos <= 100 && newPos >= trimStart + 5) {
-          setTrimEnd(newPos)
+        if (newPos <= 100 && newPos >= start + 5) {
+          setEnd(newPos)
         }
       } else {
-        if (newPos >= 0 && newPos <= trimEnd - 5) {
-          setTrimStart(newPos)
+        if (newPos >= 0 && newPos <= end - 5) {
+          setStart(newPos)
         }
       }
     }
@@ -113,8 +114,8 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
 
   const trimVideo = (): void => {
     if (!videoRef.current) return
-    const start = (videoRef.current.duration * trimStart) / 100
-    videoRef.current.currentTime = start
+    const videoStart = (videoRef.current.duration * start) / 100
+    videoRef.current.currentTime = videoStart
     play()
   }
 
@@ -124,6 +125,14 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
       togglePlay()
     }
   })
+
+  useEffect(() => {
+    if (!videoRef.current) return
+    const video = videoRef.current
+    if (video.currentTime === end / 100) {
+      console.log("yes")
+    }
+  }, [])
 
   return (
     <>
@@ -156,7 +165,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           ref={trimmerRef}
           id="trimmer"
           className="absolute bottom-0 z-20 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
-          style={{ left: `${trimStart}%`, width: `${trimEnd - trimStart}%` }}
+          style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
             onMouseDown={(e) => onTrim(e, false)}
