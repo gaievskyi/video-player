@@ -8,16 +8,17 @@
     "build": "tsc && vite build",
     "start": "bun preview",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
-    "preview": "tsc && vite build && vite preview --host"
+    "preview": "tsc && vite build && vite preview"
   },
   "dependencies": {
     "lodash.debounce": "^4.0.8",
+    "nanoid": "^5.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "use-context-selector": "^1.4.4"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.0",
+    "@types/bun": "^1.1.1",
     "@types/lodash.debounce": "^4.0.9",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",

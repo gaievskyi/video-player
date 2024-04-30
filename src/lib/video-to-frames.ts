@@ -1,3 +1,5 @@
+import { nanoid } from "nanoid"
+
 export enum VideoToFramesMethod {
   fps,
   totalFrames,
@@ -36,7 +38,7 @@ export class VideoToFrames {
           totalFrames = duration * amount
         }
         for (let time = 0; time < duration; time += duration / totalFrames) {
-          const id = window.crypto.randomUUID()
+          const id = nanoid()
           const src = await that.getVideoFrame(video, context, canvas, time)
           frames.push({ id, src })
         }
