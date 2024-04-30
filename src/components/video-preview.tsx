@@ -79,6 +79,13 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     play()
   }, 350)
 
+  const trimVideo = (): void => {
+    if (!videoRef.current) return
+    const videoStart = (videoRef.current.duration * start) / 100
+    videoRef.current.currentTime = videoStart
+    play()
+  }
+
   const onTrim = (e: React.MouseEvent, isEnd: boolean): void => {
     if (!videoRef.current) return
     e.preventDefault()
@@ -87,6 +94,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     const initialLeft = isEnd ? end : start
 
     const onDrag = (moveEvent: MouseEvent) => {
+      if (!videoRef.current) return
       const delta = moveEvent.clientX - startX
       const newPos = initialLeft + (delta / trimmer.clientWidth) * 100
 
@@ -102,8 +110,6 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     }
 
     const onDragEnd = () => {
-      if (!videoRef.current) return
-      trimVideo()
       document.removeEventListener("mousemove", onDrag)
       document.removeEventListener("mouseup", onDragEnd)
     }
@@ -112,19 +118,34 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     document.addEventListener("mouseup", onDragEnd)
   }
 
-  const trimVideo = (): void => {
-    if (!videoRef.current) return
-    const videoStart = (videoRef.current.duration * start) / 100
-    videoRef.current.currentTime = videoStart
-    play()
-  }
-
   useEventListener("keydown", (e) => {
     if (e.key === " " || e.code === "Space") {
       e.preventDefault()
       togglePlay()
     }
   })
+
+  useEventListener(
+    "timeupdate",
+    () => {
+      if (!videoRef.current || !seekRef.current) return
+      const video = videoRef.current
+      const currentVideoPosition = (video.currentTime / video.duration) * 100
+      const videoStart = (video.duration * start) / 100
+
+      if (currentVideoPosition >= end) {
+        video.currentTime = videoStart
+        play()
+      } else if (video.currentTime < videoStart) {
+        video.currentTime = videoStart
+        play()
+      }
+    },
+    videoRef,
+    {
+      passive: true,
+    },
+  )
 
   return (
     <>
@@ -156,23 +177,25 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
         <div
           ref={trimmerRef}
           id="trimmer"
-          className="absolute bottom-0 z-20 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
+          className="absolute bottom-0  h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
           style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
             onMouseDown={(e) => onTrim(e, false)}
+            onMouseUp={trimVideo}
             ref={trimStartRef}
             id="trim-start"
-            className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
+            className="absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
             style={{ left: "-16px" }}
           >
             <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
           </div>
           <div
             onMouseDown={(e) => onTrim(e, true)}
+            onMouseUp={trimVideo}
             ref={trimEndRef}
             id="trim-end"
-            className="absolute -bottom-1 -top-1 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
+            className="absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
             style={{ right: "-16px" }}
           >
             <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
