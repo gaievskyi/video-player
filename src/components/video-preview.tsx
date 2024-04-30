@@ -187,20 +187,20 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
             onMouseUp={trimVideo}
             ref={trimStartRef}
             id="trim-start"
-            className="absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
+            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
             style={{ left: "-16px" }}
           >
-            <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
+            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
           </div>
           <div
             onMouseDown={(e) => onTrim(e, true)}
             onMouseUp={trimVideo}
             ref={trimEndRef}
             id="trim-end"
-            className="absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
+            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
             style={{ right: "-16px" }}
           >
-            <div className="pointer-events-none absolute left-[8px] top-4 block h-8 w-1 rounded-[2px] bg-black/30" />
+            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
           </div>
         </div>
         <input
