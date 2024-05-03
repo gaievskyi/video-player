@@ -1,30 +1,37 @@
-# React + TypeScript + Vite
+# Video-player
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Video interaction](https://res.cloudinary.com/marcomontalbano/image/upload/v1714738877/video_to_markdown/images/streamable--nott0n-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://streamable.com/nott0n "Video interaction")
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Install [Bun](https://bun.sh) globally
 
-## Expanding the ESLint configuration
+   ```console
+   foo@bar:~$ curl -fsSL https://bun.sh/install | bash
+   ```
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+2. Install dependencies
 
-- Configure the top-level `parserOptions` property like this:
+   ```console
+   foo@bar:video-player$ bun i
+   ```
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+## Scripts
+
+### Start development server
+
+```text
+bun run dev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+### Build for production
+
+```text
+bun run build
+```
+
+### Serve for production
+
+```text
+bun start
+```
