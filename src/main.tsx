@@ -1,6 +1,5 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
-import "toolcool-range-slider"
 import { App } from "./app.tsx"
 import "./index.css"
 
