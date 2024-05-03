@@ -58,7 +58,7 @@ export const VideoEditor = () => {
 const Skeletons = () => (
   <>
     <div className="h-[25px] w-1/3 animate-pulse rounded-full bg-card" />
-    <div className="h-[276px] w-[442px]  animate-pulse rounded-xl bg-card md:h-[360px] md:w-[624px]" />
+    <div className="h-[276px] w-[350px] animate-pulse rounded-xl bg-card md:h-[360px] md:w-[624px]" />
     <div className="h-[64px] w-full animate-pulse rounded-xl bg-card md:w-[650px]" />
   </>
 )
