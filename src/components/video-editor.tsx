@@ -1,15 +1,56 @@
 import { AnimatePresence } from "framer-motion"
-import { useState, type ChangeEventHandler } from "react"
+import { useEffect, useState, type ChangeEventHandler } from "react"
 import { Spinner } from "~/components/spinner"
-import { VideoToFrames, VideoToFramesMethod, type Frame } from "~/lib/video-to-frames"
+import {
+  VideoToFrames,
+  VideoToFramesMethod,
+  type Frame,
+} from "~/lib/video-to-frames"
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
 
+const EXAMPLE_VIDEOS = {
+  bunny: "/bunny.webm",
+  earth: "/earth.mp4",
+}
+
+type PreloadedFrames = {
+  [K in keyof typeof EXAMPLE_VIDEOS]?: Frame[]
+}
+
 export const VideoEditor = () => {
   const [src, setSrc] = useState("")
-  const [frames, setFrames] = useState<Array<Frame>>([])
+  const [frames, setFrames] = useState<Frame[]>([])
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
+  const [preloadedFrames, setPreloadedFrames] = useState<PreloadedFrames>({})
+
+  // Preload frames for example videos
+  useEffect(() => {
+    const preloadVideos = async () => {
+      const loadedFrames: PreloadedFrames = {}
+
+      for (const [key, url] of Object.entries(EXAMPLE_VIDEOS)) {
+        // Preload video
+        const link = document.createElement("link")
+        link.rel = "preload"
+        link.as = "video"
+        link.href = url
+        document.head.appendChild(link)
+
+        // Preload frames
+        const frames = await VideoToFrames.getFrames(
+          url,
+          21,
+          VideoToFramesMethod.totalFrames,
+        )
+        loadedFrames[key as keyof typeof EXAMPLE_VIDEOS] = frames
+      }
+      setPreloadedFrames(loadedFrames)
+    }
+
+    preloadVideos()
+  }, [])
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
     setIsLoadingVideo(true)
@@ -29,18 +70,17 @@ export const VideoEditor = () => {
     }
   }
 
-  const handleExampleClick = async (videoSrc: string) => {
-    setIsLoadingVideo(true)
-    document.body.style.cursor = "wait"
-    const frames = await VideoToFrames.getFrames(
-      videoSrc,
-      21,
-      VideoToFramesMethod.totalFrames,
-    )
-    setFrames(frames)
-    setSrc(videoSrc)
-    setIsLoadingVideo(false)
-    document.body.style.cursor = "auto"
+  const handleExampleClick = (videoSrc: string) => {
+    // Find which example video was clicked
+    const videoKey = Object.entries(EXAMPLE_VIDEOS).find(
+      ([, url]) => url === videoSrc,
+    )?.[0] as keyof typeof EXAMPLE_VIDEOS | undefined
+
+    if (videoKey && preloadedFrames[videoKey]) {
+      // Use preloaded frames
+      setFrames(preloadedFrames[videoKey]!)
+      setSrc(videoSrc)
+    }
   }
 
   const handleReset = () => {

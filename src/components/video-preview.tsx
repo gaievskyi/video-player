@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion"
 import {
+  useEffect,
   useRef,
   useState,
   type ComponentProps,
@@ -29,6 +30,8 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
 
   const [duration, setDuration] = useState(0)
 
+  const animationFrameRef = useRef<number>()
+
   const onLoadedMetadata = () => {
     if (!videoRef.current) return
     setDuration(videoRef.current.duration)
@@ -49,26 +52,33 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
   }
 
   const syncSeekWithVideoValue: ReactEventHandler = () => {
+    if (!seekRef.current || !videoRef.current) return
+    const seek = seekRef.current
+    const video = videoRef.current
+
     const updateSeek = () => {
-      if (!seekRef.current || !videoRef.current) return
-      const seek = seekRef.current
-      const video = videoRef.current
       const value = (100 / video.duration) * video.currentTime
-      seek.value = value.toFixed(2)
-      seek.setAttribute("current-time", formatTime(video.currentTime))
-      const thumbPosition = (seek.clientWidth * value) / 100
-      seek.style.setProperty("--label-position", `${thumbPosition}px`)
+
+      if (value >= start && value <= end) {
+        seek.value = value.toFixed(2)
+        seek.setAttribute("current-time", formatTime(video.currentTime))
+        const thumbPosition = (seek.clientWidth * value) / 100
+        seek.style.setProperty("--transform-x", `${thumbPosition}px`)
+      }
     }
 
-    const animateSeek = () => {
+    const animate = () => {
       updateSeek()
       if (isPlaying) {
-        requestAnimationFrame(animateSeek)
+        animationFrameRef.current = requestAnimationFrame(animate)
       }
     }
 
     if (isPlaying) {
-      requestAnimationFrame(animateSeek)
+      cancelAnimationFrame(animationFrameRef.current!)
+      animationFrameRef.current = requestAnimationFrame(animate)
+    } else {
+      updateSeek()
     }
   }
 
@@ -76,8 +86,17 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
     if (!seekRef.current || !videoRef.current) return
     const seek = seekRef.current
     const video = videoRef.current
-    const time = video.duration * (Number(seek.value) / 100)
-    video.currentTime = time
+
+    const seekValue = Number(seek.value)
+    if (seekValue < start) {
+      seek.value = start.toString()
+      video.currentTime = (video.duration * start) / 100
+    } else if (seekValue > end) {
+      seek.value = end.toString()
+      video.currentTime = (video.duration * end) / 100
+    } else {
+      video.currentTime = video.duration * (seekValue / 100)
+    }
   }
 
   const onMouseDown: MouseEventHandler = () => {
@@ -149,16 +168,15 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
   useEventListener(
     "timeupdate",
     () => {
-      if (!videoRef.current || !seekRef.current) return
+      if (!videoRef.current) return
       const video = videoRef.current
-      const seek = seekRef.current
       const videoStart = (video.duration * start) / 100
-      if (seek.valueAsNumber >= end - 3) {
+      const videoEnd = (video.duration * end) / 100
+
+      if (video.currentTime >= videoEnd) {
         video.currentTime = videoStart
-        play()
       } else if (video.currentTime < videoStart) {
         video.currentTime = videoStart
-        play()
       }
     },
     videoRef,
@@ -166,6 +184,28 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
       passive: true,
     },
   )
+
+  useEffect(() => {
+    if (!videoRef.current) return
+    const video = videoRef.current
+    const videoStart = (video.duration * start) / 100
+
+    if (
+      video.currentTime < videoStart ||
+      video.currentTime > (video.duration * end) / 100
+    ) {
+      video.currentTime = videoStart
+    }
+  }, [start, end])
+
+  // Clean up animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [])
 
   return (
     <motion.div
@@ -192,6 +232,7 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.5, type: "spring", bounce: 0.2 }}
+            className="relative"
           >
             <video
               ref={videoRef}
@@ -208,22 +249,25 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
               <source src={src} />
               Your browser doesn't support <code>HTML5 video</code>
             </video>
+            <AnimatePresence>
+              {!isPlaying && (
+                <motion.button
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2, type: "spring", bounce: 0.3 }}
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    togglePlay()
+                  }}
+                  className="absolute inset-0 m-auto grid h-12 w-12 cursor-pointer place-items-center rounded-full bg-black/50 pl-1 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none backdrop-blur-sm hover:scale-105"
+                >
+                  <PlayIcon />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </motion.div>
-        </AnimatePresence>
-        <AnimatePresence>
-          {!isPlaying && (
-            <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.2, type: "spring", bounce: 0.3 }}
-              tabIndex={-1}
-              onClick={togglePlay}
-              className="absolute left-1/2 top-1/2 grid aspect-square -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/50 p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:scale-105"
-            >
-              <PlayIcon />
-            </motion.button>
-          )}
         </AnimatePresence>
       </div>
 
@@ -234,18 +278,18 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
         transition={{ delay: 0.2, duration: 0.5, type: "spring", bounce: 0.3 }}
       >
         <div
-          className="absolute bottom-0 top-0 z-10 rounded-l-xl bg-black/30 backdrop-blur-sm"
+          className="absolute bottom-0 top-0 z-20 rounded-l-xl bg-black/30 backdrop-blur-sm"
           style={{ left: 0, width: `${start}%` }}
         />
         <div
-          className="absolute bottom-0 top-0 z-10 rounded-r-xl bg-black/30 backdrop-blur-sm"
+          className="absolute bottom-0 top-0 z-20 rounded-r-xl bg-black/30 backdrop-blur-sm"
           style={{ left: `${end}%`, right: 0 }}
         />
 
         <div
           ref={trimmerRef}
           id="trimmer"
-          className="absolute inset-y-0 cursor-grab border-y-4 border-white"
+          className="absolute inset-y-0 cursor-grab border-y-4 border-[#e6e6e6]"
           style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
@@ -255,9 +299,9 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
             onTouchEnd={trimVideo}
             ref={trimStartRef}
             id="trim-start"
-            className="group absolute -left-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-white"
+            className="group absolute -left-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
           >
-            <div className="absolute -left-1 h-full w-1 rounded-l-3xl bg-white" />
+            <div className="absolute -left-1 h-full w-1 rounded-l-3xl bg-[#e6e6e6]" />
             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
               {formatTime((duration * start) / 100)}
             </span>
@@ -270,9 +314,9 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
             onTouchEnd={trimVideo}
             ref={trimEndRef}
             id="trim-end"
-            className="group absolute -right-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-white"
+            className="group absolute -right-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
           >
-            <div className="absolute -right-1 h-full w-1 rounded-r-3xl bg-white" />
+            <div className="absolute -right-1 h-full w-1 rounded-r-3xl bg-[#e6e6e6]" />
             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
               {formatTime((duration * end) / 100)}
             </span>
@@ -284,7 +328,7 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
           min="0"
           max="100"
           step="0.01"
-          defaultValue="0"
+          defaultValue={start.toString()}
           type="range"
           ref={seekRef}
           onInput={syncVideoWithSeekValue}
