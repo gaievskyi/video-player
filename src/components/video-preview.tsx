@@ -293,7 +293,7 @@ export const VideoPreview = ({
       exit={{
         filter: "blur(10px)",
         opacity: 0,
-        y: 135,
+        y: 90,
         scale: 0.2,
         transition: {
           ease: "easeInOut",
@@ -301,7 +301,7 @@ export const VideoPreview = ({
         },
       }}
       transition={{ duration: 0.6, type: "spring", bounce: 0.35 }}
-      className="flex flex-col gap-12"
+      className="flex max-h-[100svh] w-full flex-col gap-6 px-4"
     >
       <VideoPreviewHeader />
 

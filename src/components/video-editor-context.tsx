@@ -7,7 +7,7 @@ import {
 import type { Frame } from "~/lib/video-to-frames"
 
 export type VideoEditorContext = {
-  frames: Array<Frame>
+  frames: Array
   src: string
   onReset: () => void
 }
