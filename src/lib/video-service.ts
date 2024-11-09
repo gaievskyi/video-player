@@ -13,7 +13,6 @@ type PreloadStatus = {
 }
 
 export class VideoService {
-  private videoUrls: Map<string, string> = new Map()
   private videoCache: Map<string, CachedVideo> = new Map()
   private preloadCache: Map<string, PreloadStatus> = new Map()
   private readonly MAX_CACHE_SIZE = 10 // Maximum number of videos to cache
