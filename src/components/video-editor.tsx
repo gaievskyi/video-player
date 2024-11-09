@@ -1,182 +1,185 @@
 import { AnimatePresence } from "framer-motion"
-import { useQueryState } from "nuqs"
 import { useEffect, useState, type ChangeEventHandler } from "react"
 import { Spinner } from "~/components/spinner"
-import { dbService, type EditorState } from "~/lib/indexed-db"
+import { useRouter } from "~/lib/router"
+import { videoService } from "~/lib/video-service"
 import {
   VideoToFrames,
   VideoToFramesMethod,
   type Frame,
 } from "~/lib/video-to-frames"
-import { AutoSaveIndicator } from "./auto-save-indicator"
 import { CodecSupportIndicator } from "./codec-support-indicator"
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
 
 const EXAMPLE_VIDEOS = {
-  bunny: "/bunny.webm",
-  earth: "/earth.mp4",
+  bunny: {
+    id: "bunny.webm",
+    src: "/bunny.webm",
+    filename: "bunny.webm",
+    poster: "/rabbit.png",
+    frames: [] as Frame[],
+  },
+  earth: {
+    id: "earth.mp4",
+    src: "/earth.mp4",
+    filename: "earth.mp4",
+    frames: [] as Frame[],
+  },
 }
 
-type PreloadedFrames = {
-  [K in keyof typeof EXAMPLE_VIDEOS]?: Frame[]
+type VideoData = {
+  src: string
+  filename: string
+  frames: Frame[]
 }
 
 export const VideoEditor = () => {
-  // Replace src state with query parameter
-  const [videoSrc, setVideoSrc] = useQueryState("src")
-  const [filename, setFilename] = useQueryState("filename")
-
-  const [frames, setFrames] = useState<Frame[]>([])
+  const { navigate, params } = useRouter()
+  const videoId = params.id
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
-  const [preloadedFrames, setPreloadedFrames] = useState<PreloadedFrames>({})
-  const [isSaving, setIsSaving] = useState(false)
+  const [videoData, setVideoData] = useState<VideoData | null>(null)
 
-  // Preload frames for example videos
+  // Preload example video frames
   useEffect(() => {
-    const preloadVideos = async () => {
-      const loadedFrames: PreloadedFrames = {}
+    const preloadExampleFrames = async () => {
+      for (const video of Object.values(EXAMPLE_VIDEOS)) {
+        if (video.frames.length === 0) {
+          const frames = await VideoToFrames.getFrames(
+            video.src,
+            21,
+            VideoToFramesMethod.totalFrames,
+          )
+          video.frames = frames
+        }
+      }
+    }
 
-      for (const [key, url] of Object.entries(EXAMPLE_VIDEOS)) {
-        // Preload video
-        const link = document.createElement("link")
-        link.rel = "preload"
-        link.as = "video"
-        link.href = url
-        document.head.appendChild(link)
+    preloadExampleFrames()
+  }, [])
 
-        // Preload frames
+  // Load video data on mount or when videoId changes
+  useEffect(() => {
+    const loadVideo = async () => {
+      if (!videoId) {
+        setVideoData(null)
+        return
+      }
+
+      // Check if it's an example video first
+      const exampleVideo = Object.values(EXAMPLE_VIDEOS).find(
+        (v) => v.id === videoId,
+      )
+      if (exampleVideo) {
+        // If frames are already loaded, use them immediately
+        if (exampleVideo.frames.length > 0) {
+          setVideoData({
+            src: exampleVideo.src,
+            filename: exampleVideo.filename,
+            frames: exampleVideo.frames,
+          })
+          return
+        }
+        // If not, load them quickly
         const frames = await VideoToFrames.getFrames(
-          url,
+          exampleVideo.src,
           21,
           VideoToFramesMethod.totalFrames,
         )
-        loadedFrames[key as keyof typeof EXAMPLE_VIDEOS] = frames
+        exampleVideo.frames = frames
+        setVideoData({
+          src: exampleVideo.src,
+          filename: exampleVideo.filename,
+          frames,
+        })
+        return
       }
-      setPreloadedFrames(loadedFrames)
-    }
 
-    preloadVideos()
-  }, [])
+      // Check cache first
+      const cachedFrames = videoService.getFrames(videoId)
+      const cachedVideo = await videoService.getVideo(videoId)
 
-  // Load saved state on mount and when URL params change
-  useEffect(() => {
-    const loadSavedState = async () => {
-      if (videoSrc) {
-        setIsLoadingVideo(true)
-        try {
-          // For example videos, just load them directly
-          if (Object.values(EXAMPLE_VIDEOS).includes(videoSrc)) {
-            const frames = await VideoToFrames.getFrames(
-              videoSrc,
-              21,
-              VideoToFramesMethod.totalFrames,
-            )
-            setFrames(frames)
-            return
-          }
+      if (cachedFrames && cachedVideo) {
+        setVideoData({
+          src: cachedVideo.src,
+          filename: cachedVideo.filename,
+          frames: cachedFrames,
+        })
+        return
+      }
 
-          // For uploaded videos, try to load from IndexedDB
-          const savedState = await dbService.getState()
-          if (savedState?.videoBlob) {
-            const url = URL.createObjectURL(savedState.videoBlob)
-            const frames = await VideoToFrames.getFrames(
-              url,
-              21,
-              VideoToFramesMethod.totalFrames,
-            )
-            setFrames(frames)
-          }
-        } finally {
-          setIsLoadingVideo(false)
+      // If not in cache, show loading state
+      setIsLoadingVideo(true)
+
+      try {
+        const video = await videoService.getVideo(videoId)
+        if (video) {
+          const frames = await VideoToFrames.getFrames(
+            video.src,
+            21,
+            VideoToFramesMethod.totalFrames,
+          )
+          setVideoData({
+            src: video.src,
+            filename: video.filename,
+            frames,
+          })
+        } else {
+          console.error("Video not found")
+          navigate("/")
         }
+      } catch (error) {
+        console.error("Failed to load video:", error)
+        navigate("/")
+      } finally {
+        setIsLoadingVideo(false)
       }
     }
 
-    loadSavedState()
-  }, [videoSrc])
-
-  // Save state when video changes
-  useEffect(() => {
-    const saveState = async () => {
-      if (videoSrc && videoSrc.startsWith("blob:")) {
-        setIsSaving(true)
-        try {
-          const response = await fetch(videoSrc)
-          const blob = await response.blob()
-          const state: EditorState = {
-            src: videoSrc,
-            filename: filename || "",
-            videoBlob: blob,
-            lastModified: Date.now(),
-          }
-          await dbService.saveState(state)
-        } finally {
-          setIsSaving(false)
-        }
-      }
-    }
-
-    if (videoSrc) {
-      saveState()
-    }
-  }, [videoSrc, filename])
+    loadVideo()
+  }, [videoId, navigate])
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const file = event.target.files?.item(0)
+    if (!(file instanceof File)) return
+
     setIsLoadingVideo(true)
     document.body.style.cursor = "wait"
-    const file = event.target.files?.item(0)
-    if (file instanceof File) {
-      const url = URL.createObjectURL(file)
-      const frames = await VideoToFrames.getFrames(
-        url,
-        21,
-        VideoToFramesMethod.totalFrames,
-      )
-      setFrames(frames)
-      setVideoSrc(url)
-      setFilename(file.name)
+
+    try {
+      const { filename, url, frames } = await videoService.uploadVideo(file)
+      setVideoData({
+        src: url,
+        filename,
+        frames,
+      })
+      navigate(`/videos/${encodeURIComponent(filename)}`)
+    } catch (error) {
+      console.error("Failed to upload video:", error)
+    } finally {
       setIsLoadingVideo(false)
       document.body.style.cursor = "auto"
     }
   }
 
-  const handleExampleClick = (videoSrc: string) => {
-    // Find which example video was clicked
-    const videoKey = Object.entries(EXAMPLE_VIDEOS).find(
-      ([, url]) => url === videoSrc,
-    )?.[0] as keyof typeof EXAMPLE_VIDEOS | undefined
-
-    if (videoKey && preloadedFrames[videoKey]) {
-      // Use preloaded frames
-      setFrames(preloadedFrames[videoKey]!)
-      setVideoSrc(videoSrc)
-      setFilename(videoSrc.split("/").pop() || "")
-    }
-  }
-
-  const handleReset = async () => {
-    setVideoSrc(null)
-    setFrames([])
-    setFilename(null)
-    await dbService.clearState()
+  const handleExampleClick = (filename: string) => {
+    navigate(`/videos/${filename}`)
   }
 
   return (
     <VideoEditorContextProvider
       value={{
-        frames,
-        src: videoSrc || "",
-        filename: filename || "",
-        onReset: handleReset,
+        frames: videoData?.frames || [],
+        src: videoData?.src || "",
+        filename: videoData?.filename || "",
       }}
     >
       <CodecSupportIndicator />
-      <div className="container relative m-auto flex h-[100svh] w-full max-w-[54rem] flex-col items-center justify-center py-8">
+      <div className="container relative m-auto flex h-[100svh] w-[52rem] flex-col items-center justify-center py-8">
         <AnimatePresence mode="wait">
-          {videoSrc ? (
-            <VideoPreview key="preview" src={videoSrc} />
+          {videoData ? (
+            <VideoPreview key="preview" src={videoData.src} />
           ) : isLoadingVideo ? (
             <Spinner key="spinner" />
           ) : (
@@ -188,7 +191,6 @@ export const VideoEditor = () => {
           )}
         </AnimatePresence>
       </div>
-      <AutoSaveIndicator saving={isSaving} />
     </VideoEditorContextProvider>
   )
 }

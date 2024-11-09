@@ -1,8 +1,25 @@
 import type { ComponentProps } from "react"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import type { UploadedVideo } from "~/lib/indexed-db"
+import { videoService } from "~/lib/video-service"
+
+const EXAMPLE_VIDEOS = {
+  bunny: {
+    id: "bunny",
+    src: "/bunny.webm",
+    filename: "bunny.webm",
+    poster: "/rabbit.png",
+  },
+  earth: {
+    id: "earth",
+    src: "/earth.mp4",
+    filename: "earth.mp4",
+  },
+} as const
 
 type VideoUploadInputProps = ComponentProps<"input"> & {
-  onExampleClick: (src: string) => void
+  onExampleClick: (filename: string) => void
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>
 }
 
 export const VideoUploadInput = ({
@@ -11,6 +28,26 @@ export const VideoUploadInput = ({
 }: VideoUploadInputProps) => {
   const earthVideoRef = useRef<HTMLVideoElement>(null)
   const bunnyVideoRef = useRef<HTMLVideoElement>(null)
+  const [uploadedVideos, setUploadedVideos] = useState<UploadedVideo[]>([])
+
+  const loadUploadedVideos = async () => {
+    try {
+      const videos = await videoService.getAllVideos()
+      setUploadedVideos(videos)
+    } catch (error) {
+      console.error("Failed to load uploaded videos:", error)
+    }
+  }
+
+  useEffect(() => {
+    loadUploadedVideos()
+  }, [])
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await onChange(event)
+    // Refresh the list after upload
+    await loadUploadedVideos()
+  }
 
   const handleMouseEnter = (videoRef: React.RefObject<HTMLVideoElement>) => {
     if (videoRef.current) {
@@ -30,40 +67,43 @@ export const VideoUploadInput = ({
     <div className="flex flex-col items-center gap-8">
       <label
         htmlFor="dropzone-file"
-        className="flex h-32 w-64 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#171717] bg-card transition-colors hover:bg-card/80"
+        className="group flex h-48 w-80 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#171717] bg-card transition-all hover:border-gray-400 hover:bg-card/80"
       >
-        <div className="flex flex-col items-center justify-center pb-6 pt-5">
+        <div className="flex flex-col items-center justify-center px-6 text-center">
           <svg
-            className="mb-4 h-8 w-8"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
+            className="mb-4 h-10 w-10 text-gray-400 transition-colors group-hover:text-gray-300"
             fill="none"
-            viewBox="0 0 20 16"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
           >
             <path
-              stroke="currentColor"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth="2"
-              d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+              strokeWidth={1.5}
+              d="M12 16l-4-4m0 0l4-4m-4 4h16m-2-4v8M6 8v8"
             />
           </svg>
-          <p className="mb-1 text-sm font-bold">Open video</p>
-          <p className="text-xs">.mp4 or .webm</p>
+          <p className="mb-2 text-sm font-semibold text-gray-200">Open video</p>
+          <p className="text-xs text-gray-400">
+            Drag and drop or click to select
+          </p>
+          <p className="mt-1 text-xs text-gray-500">.mp4 or .webm</p>
         </div>
         <input
           id="dropzone-file"
-          onChange={onChange}
+          onChange={handleFileChange}
           type="file"
           accept=".mp4,.webm"
           className="hidden"
         />
       </label>
 
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-3">
+        <span className="text-sm text-gray-400">Try an example</span>
         <div className="flex gap-4">
           <button
-            onClick={() => onExampleClick("/earth.mp4")}
+            onClick={() => onExampleClick(EXAMPLE_VIDEOS.earth.filename)}
             onMouseEnter={() => handleMouseEnter(earthVideoRef)}
             onMouseLeave={() => handleMouseLeave(earthVideoRef)}
             className="hover:border-foreground group relative h-20 w-32 overflow-hidden rounded-lg border border-[#171717]"
@@ -75,14 +115,14 @@ export const VideoUploadInput = ({
               loop
               playsInline
             >
-              <source src="/earth.mp4" type="video/mp4" />
+              <source src={EXAMPLE_VIDEOS.earth.src} type="video/mp4" />
             </video>
-            <span className="absolute bottom-1 left-2 text-xs font-medium text-white drop-shadow-lg">
+            <span className="absolute bottom-1 left-2 bg-black/50 text-xs font-medium mix-blend-difference drop-shadow-lg">
               Earth
             </span>
           </button>
           <button
-            onClick={() => onExampleClick("/bunny.webm")}
+            onClick={() => onExampleClick(EXAMPLE_VIDEOS.bunny.filename)}
             onMouseEnter={() => handleMouseEnter(bunnyVideoRef)}
             onMouseLeave={() => handleMouseLeave(bunnyVideoRef)}
             className="hover:border-foreground group relative h-20 w-32 overflow-hidden rounded-lg border border-[#171717]"
@@ -93,16 +133,48 @@ export const VideoUploadInput = ({
               muted
               loop
               playsInline
-              poster="/rabbit.png"
+              poster={EXAMPLE_VIDEOS.bunny.poster}
             >
-              <source src="/bunny.webm" type="video/webm" />
+              <source src={EXAMPLE_VIDEOS.bunny.src} type="video/webm" />
             </video>
-            <span className="absolute bottom-1 left-2 text-xs font-medium text-white drop-shadow-lg">
+            <span className="absolute bottom-1 left-2 text-xs font-medium drop-shadow-lg mix-blend-difference bg-black/50">
               Bunny
             </span>
           </button>
         </div>
       </div>
+
+      {uploadedVideos.length > 0 && (
+        <div className="flex w-full max-w-2xl flex-col items-center gap-4">
+          <span className="text-sm text-gray-400">Your uploads</span>
+          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3">
+            {uploadedVideos.map((video) => (
+              <button
+                key={video.id}
+                onClick={() => onExampleClick(video.filename)}
+                className="group relative aspect-video w-full overflow-hidden rounded-lg border border-[#171717] bg-black/20 transition-all hover:border-gray-500 hover:ring-1 hover:ring-gray-500"
+              >
+                <video
+                  className="h-full w-full object-cover"
+                  muted
+                  playsInline
+                >
+                  <source src={video.src} type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-2">
+                  <span className="block truncate text-xs font-medium text-white">
+                    {video.filename}
+                  </span>
+                  <span className="text-[10px] text-gray-300">
+                    {new Date(video.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

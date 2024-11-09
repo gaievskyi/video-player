@@ -26,7 +26,7 @@ export const AutoSaveIndicator = ({ saving }: AutoSaveIndicatorProps) => {
           exit={{ opacity: 0 }}
           className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white backdrop-blur-sm"
         >
-          {saving ? "Saving..." : "All changes saved"}
+          {saving ? "Saving..." : "Saved automatically"}
         </motion.div>
       )}
     </AnimatePresence>

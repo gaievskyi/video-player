@@ -1,5 +1,6 @@
 import { SaveButton } from "./video-controls/save-button"
 import { useVideoEditorContext } from "./video-editor-context"
+import { useRouter } from "~/lib/router"
 
 interface VideoPreviewHeaderProps {
   duration: number
@@ -14,7 +15,8 @@ export const VideoPreviewHeader = ({
   end,
   src,
 }: VideoPreviewHeaderProps) => {
-  const { onReset, filename } = useVideoEditorContext()
+  const { filename } = useVideoEditorContext()
+  const { goBack } = useRouter()
   const [name, extension] = filename.split(".")
 
   const isVideoTrimmed = start > 0 || end < 100
@@ -61,7 +63,7 @@ export const VideoPreviewHeader = ({
           />
         )}
         <button
-          onClick={onReset}
+          onClick={goBack}
           className="rounded-lg bg-white/10 p-2.5 transition-colors hover:bg-white/20"
           aria-label="Close video"
         >

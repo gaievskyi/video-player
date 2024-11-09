@@ -10,14 +10,12 @@ export type VideoEditorContext = {
   frames: Frame[]
   src: string
   filename: string
-  onReset: () => void
 }
 
 export const VideoEditorContext = createContext<VideoEditorContext>({
   frames: [],
   src: "",
   filename: "",
-  onReset: () => {},
 })
 
 export const useVideoEditorContext = () => useContext(VideoEditorContext)
