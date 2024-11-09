@@ -1,6 +1,4 @@
 export class VideoProcessor {
-  private videoEncoder: VideoEncoder | null = null
-  private chunks: EncodedVideoChunk[] = []
   private startTime: number
   private endTime: number
   private mediaRecorder: MediaRecorder | null = null
