@@ -1,5 +1,5 @@
-import { useVideoEditorContext } from "./video-editor-context"
 import { SaveButton } from "./video-controls/save-button"
+import { useVideoEditorContext } from "./video-editor-context"
 
 interface VideoPreviewHeaderProps {
   duration: number
@@ -8,7 +8,12 @@ interface VideoPreviewHeaderProps {
   src: string
 }
 
-export const VideoPreviewHeader = ({ duration, start, end, src }: VideoPreviewHeaderProps) => {
+export const VideoPreviewHeader = ({
+  duration,
+  start,
+  end,
+  src,
+}: VideoPreviewHeaderProps) => {
   const { onReset, filename } = useVideoEditorContext()
   const [name, extension] = filename.split(".")
 

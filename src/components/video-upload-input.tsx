@@ -49,13 +49,13 @@ export const VideoUploadInput = ({
             />
           </svg>
           <p className="mb-1 text-sm font-bold">Open video</p>
-          <p className="text-xs">.mp4, .webm, or .ogg</p>
+          <p className="text-xs">.mp4 or .webm</p>
         </div>
         <input
           id="dropzone-file"
           onChange={onChange}
           type="file"
-          accept=".mp4,.webm,.ogg"
+          accept=".mp4,.webm"
           className="hidden"
         />
       </label>

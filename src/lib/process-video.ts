@@ -1,4 +1,4 @@
-import { checkCodecSupport } from './codec-support'
+import { checkCodecSupport, type SupportedFormat } from "./codec-support"
 
 export class VideoProcessor {
   private startTime: number
@@ -10,20 +10,32 @@ export class VideoProcessor {
     this.endTime = endTime
   }
 
+  private getInputFormat(videoFile: Blob): SupportedFormat {
+    const type = videoFile.type.toLowerCase()
+    return type.includes("webm") ? "webm" : "mp4"
+  }
+
+  private getBestSupportedMimeType(
+    support: ReturnType<typeof checkCodecSupport>,
+  ): string {
+    if (support.webm) return "video/webm"
+    if (support.mp4) return "video/mp4"
+    throw new Error("No supported video format found for recording")
+  }
+
   public async trimVideo(videoFile: Blob): Promise<Blob> {
     return new Promise(async (resolve, reject) => {
       try {
-        // Check if the input format is supported for recording
         const support = checkCodecSupport()
-        const inputFormat = videoFile.type.includes('webm') ? 'webm' : 'mp4'
+        const inputFormat = this.getInputFormat(videoFile)
 
         if (!support[inputFormat]) {
           throw new Error(
-            `Your browser doesn't support processing ${inputFormat.toUpperCase()} videos.`
+            `Your browser doesn't support processing ${inputFormat.toUpperCase()} videos.`,
           )
         }
 
-        const videoElement = document.createElement('video')
+        const videoElement = document.createElement("video")
         videoElement.muted = true
         videoElement.playsInline = true
 
@@ -40,18 +52,18 @@ export class VideoProcessor {
         videoElement.currentTime = this.startTime
 
         // Create a canvas to draw video frames
-        const canvas = document.createElement('canvas')
+        const canvas = document.createElement("canvas")
         canvas.width = videoElement.videoWidth
         canvas.height = videoElement.videoHeight
-        const ctx = canvas.getContext('2d')!
+        const ctx = canvas.getContext("2d")!
 
         // Create a media stream from the canvas
         const stream = canvas.captureStream(30) // 30 FPS
 
-        // Setup MediaRecorder with high quality
+        // Setup MediaRecorder with best supported format
         this.mediaRecorder = new MediaRecorder(stream, {
-          mimeType: support.webm ? 'video/webm' : 'video/mp4',
-          videoBitsPerSecond: 8000000 // 8 Mbps
+          mimeType: this.getBestSupportedMimeType(support),
+          videoBitsPerSecond: 8000000, // 8 Mbps
         })
 
         const chunks: Blob[] = []
@@ -89,7 +101,6 @@ export class VideoProcessor {
         // Start playback and processing
         await videoElement.play()
         processFrame()
-
       } catch (error) {
         reject(error)
       }
