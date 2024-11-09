@@ -11,7 +11,7 @@ export const CodecSupportIndicator = () => {
 
   return (
     <div
-      className={`fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full px-3 py-1 text-sm font-medium shadow-lg ${
+      className={`fixed w-fit left-1/2 top-4 z-50 -translate-x-1/2 rounded-full px-3 py-1 text-sm font-medium shadow-lg ${
         isSupported
           ? "bg-green-500/20 text-green-500"
           : "bg-red-500/20 text-red-500"
