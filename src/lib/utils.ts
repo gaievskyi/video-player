@@ -1,7 +1,14 @@
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+// eslint-disable-next-line no-restricted-properties
 export const isDevelopment = process.env.NODE_ENV === "development"
+// eslint-disable-next-line no-restricted-properties
 export const isProduction = process.env.NODE_ENV === "production"
 
-export { twMerge as cn } from "tailwind-merge"
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 export const lerp = (start: number, end: number, amt: number) =>
   (1 - amt) * start + amt * end

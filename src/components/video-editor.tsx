@@ -1,4 +1,5 @@
 import { useState, type ChangeEventHandler } from "react"
+import { Spinner } from "~/components/spinner"
 import {
   VideoToFrames,
   VideoToFramesMethod,
@@ -7,10 +8,10 @@ import {
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
+import { AnimatePresence } from "framer-motion"
 
 export const VideoEditor = () => {
   const [src, setSrc] = useState("")
-  const [fileName, setFileName] = useState(".mp4")
   const [frames, setFrames] = useState<Array<Frame>>([])
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
 
@@ -28,37 +29,54 @@ export const VideoEditor = () => {
         VideoToFramesMethod.totalFrames,
       )
       setFrames(frames)
-      setFileName(file.name)
       setSrc(url)
       setIsLoadingVideo(false)
       document.body.style.cursor = "auto"
     }
   }
 
+  const handleExampleClick = async (videoSrc: string) => {
+    setIsLoadingVideo(true)
+    document.body.style.cursor = "wait"
+    const frames = await VideoToFrames.getFrames(
+      videoSrc,
+      21,
+      VideoToFramesMethod.totalFrames,
+    )
+    setFrames(frames)
+    setSrc(videoSrc)
+    setIsLoadingVideo(false)
+    document.body.style.cursor = "auto"
+  }
+
+  const handleReset = () => {
+    setSrc("")
+    setFrames([])
+  }
+
   return (
     <VideoEditorContextProvider
       value={{
-        fileName,
         frames,
+        src,
+        onReset: handleReset,
       }}
     >
       <div className="container relative m-auto flex h-full min-h-[100svh] w-full flex-col items-center justify-center gap-12 px-8 py-4 md:max-w-2xl">
-        {src.length > 1 ? (
-          <VideoPreview src={src} />
-        ) : isLoadingVideo ? (
-          <Skeletons />
-        ) : (
-          <VideoUploadInput onChange={handleFileChange} />
-        )}
+        <AnimatePresence mode="wait">
+          {src.length > 1 ? (
+            <VideoPreview key="preview" src={src} />
+          ) : isLoadingVideo ? (
+            <Spinner key="spinner" />
+          ) : (
+            <VideoUploadInput
+              key="upload"
+              onChange={handleFileChange}
+              onExampleClick={handleExampleClick}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </VideoEditorContextProvider>
   )
 }
-
-const Skeletons = () => (
-  <>
-    <div className="h-[25px] w-1/3 animate-pulse rounded-full bg-card" />
-    <div className="h-[276px] w-[350px] animate-pulse rounded-xl bg-card md:h-[360px] md:w-[624px]" />
-    <div className="h-[64px] w-full animate-pulse rounded-xl bg-card md:w-[650px]" />
-  </>
-)

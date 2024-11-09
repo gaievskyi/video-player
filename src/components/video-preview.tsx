@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion"
 import {
   useRef,
   useState,
@@ -9,9 +10,9 @@ import {
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
-import { cn, formatTime } from "~/lib/utils"
+import { formatTime } from "~/lib/utils"
 import { Frames } from "./frames"
-import { PauseIcon, PlayIcon } from "./icons"
+import { PlayIcon } from "./icons"
 import { VideoPreviewHeader } from "./video-preview-header"
 
 export type VideoProps = ComponentProps<"video">
@@ -29,7 +30,11 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
   const togglePlay = (): void => {
-    isPlaying ? videoRef.current?.pause() : videoRef.current?.play()
+    if (isPlaying) {
+      videoRef.current?.pause()
+    } else {
+      videoRef.current?.play()
+    }
     toggleIsPlaying()
   }
 
@@ -147,39 +152,83 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
   )
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0, y: 20, filter: "blur(7px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{
+        filter: "blur(7px)",
+        opacity: 0,
+        y: 200,
+        scale: 0.5,
+        transition: {
+          ease: "easeInOut",
+          duration: 0.2,
+        },
+      }}
+      transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
+      className="flex flex-col gap-12"
+    >
       <VideoPreviewHeader />
-      <video
-        ref={videoRef}
-        onClick={togglePlay}
-        onTimeUpdate={syncSeekWithVideoValue}
-        className="peer relative w-full cursor-pointer rounded-[2cqw]"
-        playsInline
-        autoPlay
-        muted
-        loop
-        {...props}
-      >
-        <source src={src} />
-        Your browser doesn't support <code>HTML5 video</code>
-      </video>
+      <div className="relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.5, type: "spring", bounce: 0.2 }}
+          >
+            <video
+              ref={videoRef}
+              onClick={togglePlay}
+              onTimeUpdate={syncSeekWithVideoValue}
+              className="peer w-full cursor-pointer rounded-[2cqw] border border-[#171717]"
+              playsInline
+              autoPlay
+              muted
+              loop
+              {...props}
+            >
+              <source src={src} />
+              Your browser doesn't support <code>HTML5 video</code>
+            </video>
+          </motion.div>
+        </AnimatePresence>
+        <AnimatePresence>
+          {!isPlaying && (
+            <motion.button
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2, type: "spring", bounce: 0.3 }}
+              tabIndex={-1}
+              onClick={togglePlay}
+              className="absolute left-1/2 top-1/2 grid aspect-square -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/50 p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:scale-105"
+            >
+              <PlayIcon />
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
 
-      <button
-        tabIndex={-1}
-        onClick={togglePlay}
-        className={cn(
-          "invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full bg-black/50 p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:visible peer-hover:visible",
-          !isPlaying ? "visible" : "invisible",
-        )}
+      <motion.div
+        className="container relative flex h-16 justify-between rounded-xl bg-card"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5, type: "spring", bounce: 0.3 }}
       >
-        {isPlaying ? <PauseIcon /> : <PlayIcon />}
-      </button>
+        <div
+          className="absolute bottom-0 top-0 z-10 rounded-l-xl bg-black/30 backdrop-blur-sm"
+          style={{ left: 0, width: `${start}%` }}
+        />
+        <div
+          className="absolute bottom-0 top-0 z-10 rounded-r-xl bg-black/30 backdrop-blur-sm"
+          style={{ left: `${end}%`, right: 0 }}
+        />
 
-      <div className="container relative flex h-16 justify-between rounded-xl bg-card">
         <div
           ref={trimmerRef}
           id="trimmer"
-          className="absolute bottom-0 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
+          className="absolute bottom-0 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow-[0_0_10px_rgba(0,0,0,0.1)]"
           style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
@@ -190,7 +239,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
             className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
             style={{ left: "-16px" }}
           >
-            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
+            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
           </div>
           <div
             onMouseDown={(e) => onTrim(e, true)}
@@ -200,7 +249,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
             className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
             style={{ right: "-16px" }}
           >
-            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
+            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
           </div>
         </div>
         <input
@@ -217,11 +266,11 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
           className="seek absolute z-10"
         />
         <div className="flex justify-between overflow-clip rounded-xl">
-          <div className="flex justify-between ">
+          <div className="flex justify-between">
             <Frames />
           </div>
         </div>
-      </div>
-    </>
+      </motion.div>
+    </motion.div>
   )
 }
