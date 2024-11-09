@@ -1,6 +1,8 @@
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion"
-import { useState } from "react"
+import { useRef, useState } from "react"
+import { ErrorAlert } from "~/components/error-alert"
 import { Spinner } from "~/components/spinner"
+import { checkCodecSupport } from "~/lib/codec-support"
 import { VideoProcessor } from "~/lib/process-video"
 
 interface SaveButtonProps {
@@ -17,11 +19,19 @@ export const SaveButton = ({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isHovered, setIsHovered] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const handleSave = async () => {
     try {
       setIsSaving(true)
       setError(null)
+
+      const support = checkCodecSupport()
+      if (!support.webm && !support.mp4) {
+        throw new Error(
+          "Your browser doesn't support video processing. Please try Chrome or Firefox.",
+        )
+      }
 
       const response = await fetch(videoSrc)
       const videoFile = await response.blob()
@@ -45,7 +55,11 @@ export const SaveButton = ({
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error("Error saving video:", error)
-      setError(error instanceof Error ? error.message : "Failed to save video")
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save video. Please try a different browser or video format.",
+      )
     } finally {
       setIsSaving(false)
     }
@@ -61,6 +75,7 @@ export const SaveButton = ({
     >
       <LayoutGroup>
         <motion.button
+          ref={buttonRef}
           layout
           onClick={handleSave}
           disabled={isSaving}
@@ -135,20 +150,7 @@ export const SaveButton = ({
             )}
           </AnimatePresence>
         </motion.button>
-
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              className="absolute -bottom-12 right-0 whitespace-nowrap rounded-lg bg-white/90 px-4 py-2 text-sm font-medium text-red-500 shadow-lg backdrop-blur-sm"
-            >
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <ErrorAlert error={error} buttonRef={buttonRef} />
       </LayoutGroup>
     </motion.div>
   )

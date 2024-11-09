@@ -22,6 +22,7 @@ type PreloadedFrames = {
 
 export const VideoEditor = () => {
   const [src, setSrc] = useState("")
+  const [filename, setFilename] = useState("")
   const [frames, setFrames] = useState<Frame[]>([])
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
   const [preloadedFrames, setPreloadedFrames] = useState<PreloadedFrames>({})
@@ -66,6 +67,7 @@ export const VideoEditor = () => {
       )
       setFrames(frames)
       setSrc(url)
+      setFilename(file.name)
       setIsLoadingVideo(false)
       document.body.style.cursor = "auto"
     }
@@ -81,12 +83,14 @@ export const VideoEditor = () => {
       // Use preloaded frames
       setFrames(preloadedFrames[videoKey]!)
       setSrc(videoSrc)
+      setFilename(videoSrc.split("/").pop() || "")
     }
   }
 
   const handleReset = () => {
     setSrc("")
     setFrames([])
+    setFilename("")
   }
 
   return (
@@ -94,6 +98,7 @@ export const VideoEditor = () => {
       value={{
         frames,
         src,
+        filename,
         onReset: handleReset,
       }}
     >

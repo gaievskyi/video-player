@@ -9,9 +9,8 @@ interface VideoPreviewHeaderProps {
 }
 
 export const VideoPreviewHeader = ({ duration, start, end, src }: VideoPreviewHeaderProps) => {
-  const { onReset } = useVideoEditorContext()
-  const fileName = src.split("/").pop() || ""
-  const [name, extension] = fileName.split(".")
+  const { onReset, filename } = useVideoEditorContext()
+  const [name, extension] = filename.split(".")
 
   const isVideoTrimmed = start > 0 || end < 100
 

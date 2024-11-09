@@ -290,16 +290,6 @@ export const VideoPreview = ({
     <motion.div
       initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{
-        filter: "blur(10px)",
-        opacity: 0,
-        y: 90,
-        scale: 0.2,
-        transition: {
-          ease: "easeInOut",
-          duration: 0.2,
-        },
-      }}
       transition={{ duration: 0.6, type: "spring", bounce: 0.35 }}
       className="flex max-h-[100svh] w-full flex-col gap-6 px-4"
     >

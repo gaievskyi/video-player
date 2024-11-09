@@ -1,3 +1,5 @@
+import { checkCodecSupport } from './codec-support'
+
 export class VideoProcessor {
   private startTime: number
   private endTime: number
@@ -11,6 +13,16 @@ export class VideoProcessor {
   public async trimVideo(videoFile: Blob): Promise<Blob> {
     return new Promise(async (resolve, reject) => {
       try {
+        // Check if the input format is supported for recording
+        const support = checkCodecSupport()
+        const inputFormat = videoFile.type.includes('webm') ? 'webm' : 'mp4'
+
+        if (!support[inputFormat]) {
+          throw new Error(
+            `Your browser doesn't support processing ${inputFormat.toUpperCase()} videos.`
+          )
+        }
+
         const videoElement = document.createElement('video')
         videoElement.muted = true
         videoElement.playsInline = true
@@ -38,7 +50,7 @@ export class VideoProcessor {
 
         // Setup MediaRecorder with high quality
         this.mediaRecorder = new MediaRecorder(stream, {
-          mimeType: videoFile.type,
+          mimeType: support.webm ? 'video/webm' : 'video/mp4',
           videoBitsPerSecond: 8000000 // 8 Mbps
         })
 

@@ -9,12 +9,14 @@ import type { Frame } from "~/lib/video-to-frames"
 export type VideoEditorContext = {
   frames: Frame[]
   src: string
+  filename: string
   onReset: () => void
 }
 
 export const VideoEditorContext = createContext<VideoEditorContext>({
   frames: [],
   src: "",
+  filename: "",
   onReset: () => {},
 })
 
