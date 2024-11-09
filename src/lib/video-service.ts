@@ -7,10 +7,17 @@ type CachedVideo = {
   lastAccessed: number
 }
 
+type PreloadStatus = {
+  promise: Promise<UploadedVideo | null>
+  timestamp: number
+}
+
 export class VideoService {
   private videoUrls: Map<string, string> = new Map()
   private videoCache: Map<string, CachedVideo> = new Map()
+  private preloadCache: Map<string, PreloadStatus> = new Map()
   private readonly MAX_CACHE_SIZE = 10 // Maximum number of videos to cache
+  private readonly PRELOAD_CACHE_TIMEOUT = 30000 // 30 seconds
 
   private addToCache(filename: string, url: string, frames: Frame[]) {
     // If cache is full, remove least recently used item
@@ -178,6 +185,37 @@ export class VideoService {
       URL.revokeObjectURL(cache.url)
     })
     this.videoCache.clear()
+  }
+
+  async preloadVideo(filename: string): Promise<void> {
+    // Don't preload if already in cache
+    if (this.videoCache.has(filename)) return
+
+    // Check if there's an ongoing preload
+    const existing = this.preloadCache.get(filename)
+    if (existing) {
+      if (Date.now() - existing.timestamp < this.PRELOAD_CACHE_TIMEOUT) {
+        return // Use existing preload if it's recent
+      }
+      // Otherwise, let it continue and start a new preload
+    }
+
+    const preloadPromise = this.getVideo(filename)
+    this.preloadCache.set(filename, {
+      promise: preloadPromise,
+      timestamp: Date.now()
+    })
+
+    try {
+      await preloadPromise
+    } finally {
+      // Clean up old preload entries
+      for (const [key, value] of this.preloadCache.entries()) {
+        if (Date.now() - value.timestamp > this.PRELOAD_CACHE_TIMEOUT) {
+          this.preloadCache.delete(key)
+        }
+      }
+    }
   }
 }
 
