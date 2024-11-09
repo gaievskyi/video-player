@@ -19,7 +19,7 @@ const EXAMPLE_VIDEOS = {
 
 type VideoUploadInputProps = ComponentProps<"input"> & {
   onExampleClick: (filename: string) => void
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 export const VideoUploadInput = ({
