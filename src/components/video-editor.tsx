@@ -1,23 +1,17 @@
+import { AnimatePresence } from "framer-motion"
 import { useState, type ChangeEventHandler } from "react"
 import { Spinner } from "~/components/spinner"
-import {
-  VideoToFrames,
-  VideoToFramesMethod,
-  type Frame,
-} from "~/lib/video-to-frames"
+import { VideoToFrames, VideoToFramesMethod, type Frame } from "~/lib/video-to-frames"
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
-import { AnimatePresence } from "framer-motion"
 
 export const VideoEditor = () => {
   const [src, setSrc] = useState("")
   const [frames, setFrames] = useState<Array<Frame>>([])
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
 
-  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (
-    event,
-  ) => {
+  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
     setIsLoadingVideo(true)
     document.body.style.cursor = "wait"
     const file = event.target.files?.item(0)
@@ -62,7 +56,7 @@ export const VideoEditor = () => {
         onReset: handleReset,
       }}
     >
-      <div className="container relative m-auto flex h-full min-h-[100svh] w-full flex-col items-center justify-center gap-12 px-8 py-4 md:max-w-2xl">
+      <div className="container relative m-auto flex h-full min-h-[100svh] w-full flex-col items-center justify-center gap-12 px-8 py-4">
         <AnimatePresence mode="wait">
           {src.length > 1 ? (
             <VideoPreview key="preview" src={src} />

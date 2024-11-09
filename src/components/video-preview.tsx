@@ -15,9 +15,7 @@ import { Frames } from "./frames"
 import { PlayIcon } from "./icons"
 import { VideoPreviewHeader } from "./video-preview-header"
 
-export type VideoProps = ComponentProps<"video">
-
-export const VideoPreview = ({ src, ...props }: VideoProps) => {
+export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const seekRef = useRef<HTMLInputElement>(null)
   const trimmerRef = useRef<HTMLDivElement>(null)
@@ -28,6 +26,13 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
   const [end, setEnd] = useState(100)
 
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
+
+  const [duration, setDuration] = useState(0)
+
+  const onLoadedMetadata = () => {
+    if (!videoRef.current) return
+    setDuration(videoRef.current.duration)
+  }
 
   const togglePlay = (): void => {
     if (isPlaying) {
@@ -43,7 +48,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     setIsPlaying(true)
   }
 
-  const syncSeekWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
+  const syncSeekWithVideoValue: ReactEventHandler = () => {
     const updateSeek = () => {
       if (!seekRef.current || !videoRef.current) return
       const seek = seekRef.current
@@ -67,7 +72,7 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     }
   }
 
-  const syncVideoWithSeekValue: FormEventHandler<HTMLInputElement> = () => {
+  const syncVideoWithSeekValue: FormEventHandler = () => {
     if (!seekRef.current || !videoRef.current) return
     const seek = seekRef.current
     const video = videoRef.current
@@ -75,12 +80,12 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     video.currentTime = time
   }
 
-  const onMouseDown: MouseEventHandler<HTMLInputElement> = () => {
+  const onMouseDown: MouseEventHandler = () => {
     videoRef.current?.pause()
     setIsPlaying(false)
   }
 
-  const onMouseUp: MouseEventHandler<HTMLInputElement> = useDebounced(() => {
+  const onMouseUp: MouseEventHandler = useDebounced(() => {
     play()
   }, 350)
 
@@ -91,16 +96,23 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     play()
   }
 
-  const onTrim = (e: React.MouseEvent, isEnd: boolean): void => {
+  const onTrim = (
+    e: React.MouseEvent | React.TouchEvent,
+    isEnd: boolean,
+  ): void => {
     if (!videoRef.current) return
     e.preventDefault()
     const trimmer = videoRef.current
-    const startX = e.clientX
+    const startX = "touches" in e ? e.touches[0].clientX : e.clientX
     const initialLeft = isEnd ? end : start
 
-    const onDrag = (moveEvent: MouseEvent) => {
+    const onDrag = (moveEvent: MouseEvent | TouchEvent) => {
       if (!videoRef.current) return
-      const delta = moveEvent.clientX - startX
+      const currentX =
+        "touches" in moveEvent
+          ? moveEvent.touches[0].clientX
+          : moveEvent.clientX
+      const delta = currentX - startX
       const newPos = initialLeft + (delta / trimmer.clientWidth) * 100
 
       if (isEnd) {
@@ -117,10 +129,14 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
     const onDragEnd = () => {
       document.removeEventListener("mousemove", onDrag)
       document.removeEventListener("mouseup", onDragEnd)
+      document.removeEventListener("touchmove", onDrag)
+      document.removeEventListener("touchend", onDragEnd)
     }
 
     document.addEventListener("mousemove", onDrag)
     document.addEventListener("mouseup", onDragEnd)
+    document.addEventListener("touchmove", onDrag)
+    document.addEventListener("touchend", onDragEnd)
   }
 
   useEventListener("keydown", (e) => {
@@ -181,7 +197,8 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
               ref={videoRef}
               onClick={togglePlay}
               onTimeUpdate={syncSeekWithVideoValue}
-              className="peer w-full cursor-pointer rounded-[2cqw] border border-[#171717]"
+              onLoadedMetadata={onLoadedMetadata}
+              className="peer w-full cursor-pointer rounded-[1.2rem] border border-[#171717] lg:rounded-[1.8rem]"
               playsInline
               autoPlay
               muted
@@ -228,28 +245,38 @@ export const VideoPreview = ({ src, ...props }: VideoProps) => {
         <div
           ref={trimmerRef}
           id="trimmer"
-          className="absolute bottom-0 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow-[0_0_10px_rgba(0,0,0,0.1)]"
+          className="absolute inset-y-0 cursor-grab border-y-4 border-white"
           style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
             onMouseDown={(e) => onTrim(e, false)}
+            onTouchStart={(e) => onTrim(e, false)}
             onMouseUp={trimVideo}
+            onTouchEnd={trimVideo}
             ref={trimStartRef}
             id="trim-start"
-            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
-            style={{ left: "-16px" }}
+            className="group absolute -left-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-white"
           >
-            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
+            <div className="absolute -left-1 h-full w-1 rounded-l-3xl bg-white" />
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
+              {formatTime((duration * start) / 100)}
+            </span>
+            <div className="pointer-events-none absolute left-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
           </div>
           <div
             onMouseDown={(e) => onTrim(e, true)}
+            onTouchStart={(e) => onTrim(e, true)}
             onMouseUp={trimVideo}
+            onTouchEnd={trimVideo}
             ref={trimEndRef}
             id="trim-end"
-            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
-            style={{ right: "-16px" }}
+            className="group absolute -right-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-white"
           >
-            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
+            <div className="absolute -right-1 h-full w-1 rounded-r-3xl bg-white" />
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
+              {formatTime((duration * end) / 100)}
+            </span>
+            <div className="pointer-events-none absolute right-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
           </div>
         </div>
         <input
