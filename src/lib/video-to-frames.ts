@@ -6,7 +6,7 @@ export enum VideoToFramesMethod {
 export type Frame = { id: string; src: string }
 
 export class VideoToFrames {
-  public static getFrames(
+  public static async getFrames(
     videoUrl: string,
     amount: number,
     type: VideoToFramesMethod = VideoToFramesMethod.fps,
@@ -24,11 +24,19 @@ export class VideoToFrames {
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
         duration = video.duration
-        const totalFrames =
-          type === VideoToFramesMethod.fps ? duration * amount : amount
 
-        for (let time = 0; time < duration; time += duration / totalFrames) {
-          const id = time.toString()
+        // Optimize frame count for better visual quality
+        const desiredFrameCount = 24 // iOS-like frame density
+        const totalFrames = type === VideoToFramesMethod.fps
+          ? Math.min(duration * amount, desiredFrameCount)
+          : Math.min(amount, desiredFrameCount)
+
+        const timeStep = duration / totalFrames
+
+        // Generate frames with consistent spacing
+        for (let i = 0; i < totalFrames; i++) {
+          const time = i * timeStep
+          const id = time.toFixed(2)
           const src = await this.getVideoFrame(video, context, canvas, time)
           frames.push({ id, src })
         }
@@ -64,8 +72,15 @@ export class VideoToFrames {
     resolve: (frame: string) => void,
     reject: (error: string) => void,
   ) {
+    // Ensure high-quality frame extraction
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = 'high'
+
     context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
-    canvas.convertToBlob().then(
+    canvas.convertToBlob({
+      type: 'image/jpeg',
+      quality: 0.85  // Balance between quality and performance
+    }).then(
       (blob) => {
         const reader = new FileReader()
         reader.onloadend = () => resolve(reader.result?.toString() ?? "")

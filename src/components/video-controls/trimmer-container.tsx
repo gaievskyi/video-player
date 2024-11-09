@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { Frames } from "../frames"
-import { TrimmerControl } from "./trimmer-control"
 import { SeekControl } from "./seek-control"
+import { TrimmerControl } from "./trimmer-control"
 
 type TrimmerContainerProps = {
   start: number
@@ -30,7 +30,7 @@ export const TrimmerContainer = ({
 }: TrimmerContainerProps) => {
   return (
     <motion.div
-      className="container relative flex h-16 justify-between rounded-xl bg-card"
+      className="container relative flex h-16 justify-between rounded-xl bg-card border border-[#171717]"
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2, duration: 0.5, type: "spring", bounce: 0.3 }}

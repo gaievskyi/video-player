@@ -23,7 +23,7 @@ export const TrimmerControl = ({
   return (
     <div
       id="trimmer"
-      className="absolute inset-y-0 cursor-grab border-y-4 border-[#e6e6e6]"
+      className="absolute inset-y-0 cursor-grab outline outline-4 outline-[#e6e6e6]"
       style={{ left: `${start}%`, width: `${end - start}%` }}
     >
       <div
@@ -41,7 +41,9 @@ export const TrimmerControl = ({
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm"
+              className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
+                start < 10 ? "left-0" : "left-1/2 -translate-x-1/2"
+              }`}
             >
               {formatTime((duration * start) / 100)}
             </motion.span>
@@ -65,7 +67,9 @@ export const TrimmerControl = ({
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm"
+              className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
+                end > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
+              }`}
             >
               {formatTime((duration * start) / 100)} -{" "}
               {formatTime((duration * end) / 100)}
@@ -75,7 +79,9 @@ export const TrimmerControl = ({
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm"
+              className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
+                end > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
+              }`}
             >
               {formatTime((duration * end) / 100)}
             </motion.span>

@@ -17,7 +17,10 @@ import { VideoContainer } from "./video-controls/video-container"
 import { VolumeControl } from "./video-controls/volume-control"
 import { VideoPreviewHeader } from "./video-preview-header"
 
-export const VideoPreview = ({ src, ...props }: ComponentProps<"video"> & {
+export const VideoPreview = ({
+  src,
+  ...props
+}: ComponentProps<"video"> & {
   src: string
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null)

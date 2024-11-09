@@ -96,7 +96,7 @@ export const VideoEditor = () => {
         onReset: handleReset,
       }}
     >
-      <div className="container relative m-auto flex h-full min-h-[100svh] w-full flex-col items-center justify-center gap-12 px-8 py-4">
+      <div className="container max-w-[54rem] relative m-auto flex h-[100svh] w-full flex-col items-center justify-center gap-12 px-8 pb-8">
         <AnimatePresence mode="wait">
           {src.length > 1 ? (
             <VideoPreview key="preview" src={src} />
