@@ -1,9 +1,19 @@
 import { useVideoEditorContext } from "./video-editor-context"
+import { SaveButton } from "./video-controls/save-button"
 
-export const VideoPreviewHeader = () => {
-  const { src, onReset } = useVideoEditorContext()
+interface VideoPreviewHeaderProps {
+  duration: number
+  start: number
+  end: number
+  src: string
+}
+
+export const VideoPreviewHeader = ({ duration, start, end, src }: VideoPreviewHeaderProps) => {
+  const { onReset } = useVideoEditorContext()
   const fileName = src.split("/").pop() || ""
   const [name, extension] = fileName.split(".")
+
+  const isVideoTrimmed = start > 0 || end < 100
 
   return (
     <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-black/20 px-6 py-4 backdrop-blur-sm">
@@ -37,26 +47,36 @@ export const VideoPreviewHeader = () => {
           <span className="text-sm text-white/60">.{extension}</span>
         </div>
       </div>
-      <button
-        onClick={onReset}
-        className="rounded-lg bg-white/10 p-2.5 transition-colors hover:bg-white/20"
-        aria-label="Close video"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+
+      <div className="flex items-center gap-3">
+        {isVideoTrimmed && (
+          <SaveButton
+            videoSrc={src}
+            startTime={(duration * start) / 100}
+            endTime={(duration * end) / 100}
+          />
+        )}
+        <button
+          onClick={onReset}
+          className="rounded-lg bg-white/10 p-2.5 transition-colors hover:bg-white/20"
+          aria-label="Close video"
         >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }

@@ -303,7 +303,12 @@ export const VideoPreview = ({
       transition={{ duration: 0.6, type: "spring", bounce: 0.35 }}
       className="flex max-h-[100svh] w-full flex-col gap-6 px-4"
     >
-      <VideoPreviewHeader />
+      <VideoPreviewHeader
+        duration={duration}
+        start={start}
+        end={end}
+        src={src}
+      />
 
       <VideoContainer
         videoRef={videoRef}

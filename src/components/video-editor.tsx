@@ -9,6 +9,7 @@ import {
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
+import { CodecSupportIndicator } from "./codec-support-indicator"
 
 const EXAMPLE_VIDEOS = {
   bunny: "/bunny.webm",
@@ -96,6 +97,7 @@ export const VideoEditor = () => {
         onReset: handleReset,
       }}
     >
+      <CodecSupportIndicator />
       <div className="container relative m-auto flex min-h-[100svh] w-full max-w-[54rem] flex-col items-center justify-center py-8">
         <AnimatePresence mode="wait">
           {src.length > 1 ? (
