@@ -13,7 +13,7 @@ import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
 import { formatTime } from "~/lib/utils"
 import { Frames } from "./frames"
-import { PlayIcon } from "./icons"
+import { PlayIcon, VolumeIcon, VolumeMutedIcon } from "./icons"
 import { VideoPreviewHeader } from "./video-preview-header"
 
 export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
@@ -32,9 +32,25 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
 
   const animationFrameRef = useRef<number>()
 
+  const SEEK_INCREMENT = 5
+
+  const [seekDirection, setSeekDirection] = useState<"left" | "right" | null>(
+    null,
+  )
+
+  const [volume, setVolume] = useState(1)
+  const [isMuted, setIsMuted] = useState(true)
+  const [isVolumeHovered, setIsVolumeHovered] = useState(false)
+
   const onLoadedMetadata = () => {
-    if (!videoRef.current) return
+    if (!videoRef.current || !Number.isFinite(videoRef.current.duration)) return
     setDuration(videoRef.current.duration)
+
+    // Ensure initial position is valid
+    const videoStart = (videoRef.current.duration * start) / 100
+    if (Number.isFinite(videoStart)) {
+      videoRef.current.currentTime = videoStart
+    }
   }
 
   const togglePlay = (): void => {
@@ -163,15 +179,50 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
       e.preventDefault()
       togglePlay()
     }
+
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault()
+      if (!videoRef.current || !seekRef.current || !videoRef.current.duration)
+        return
+
+      setSeekDirection(e.key === "ArrowLeft" ? "left" : "right")
+
+      const video = videoRef.current
+      const seek = seekRef.current
+      const increment = e.key === "ArrowLeft" ? -SEEK_INCREMENT : SEEK_INCREMENT
+
+      const newTime = Math.max(
+        (video.duration * start) / 100,
+        Math.min((video.duration * end) / 100, video.currentTime + increment),
+      )
+
+      if (!Number.isFinite(newTime)) return
+
+      video.currentTime = newTime
+
+      const newValue = (100 / video.duration) * newTime
+      seek.value = newValue.toFixed(2)
+      seek.setAttribute("current-time", formatTime(newTime))
+      const thumbPosition = (seek.clientWidth * newValue) / 100
+      seek.style.setProperty("--transform-x", `${thumbPosition}px`)
+    }
   })
 
   useEventListener(
     "timeupdate",
     () => {
-      if (!videoRef.current) return
+      if (!videoRef.current || !videoRef.current.duration) return
       const video = videoRef.current
       const videoStart = (video.duration * start) / 100
       const videoEnd = (video.duration * end) / 100
+
+      if (
+        !Number.isFinite(videoStart) ||
+        !Number.isFinite(videoEnd) ||
+        !Number.isFinite(video.duration)
+      ) {
+        return
+      }
 
       if (video.currentTime >= videoEnd) {
         video.currentTime = videoStart
@@ -186,9 +237,17 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
   )
 
   useEffect(() => {
-    if (!videoRef.current) return
+    if (!videoRef.current || !videoRef.current.duration) return
     const video = videoRef.current
     const videoStart = (video.duration * start) / 100
+
+    if (
+      !Number.isFinite(videoStart) ||
+      !Number.isFinite(video.duration) ||
+      !Number.isFinite(end)
+    ) {
+      return
+    }
 
     if (
       video.currentTime < videoStart ||
@@ -198,6 +257,13 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
     }
   }, [start, end])
 
+  useEffect(() => {
+    if (seekDirection) {
+      const timeout = setTimeout(() => setSeekDirection(null), 200)
+      return () => clearTimeout(timeout)
+    }
+  }, [seekDirection])
+
   // Clean up animation frame on unmount
   useEffect(() => {
     return () => {
@@ -206,6 +272,32 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
       }
     }
   }, [])
+
+  const areHandlesClose = end - start < 15
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value)
+    setVolume(newVolume)
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume
+    }
+    if (newVolume === 0) {
+      setIsMuted(true)
+    } else {
+      setIsMuted(false)
+    }
+  }
+
+  const toggleMute = () => {
+    if (!videoRef.current) return
+    if (isMuted) {
+      videoRef.current.volume = volume
+      setIsMuted(false)
+    } else {
+      videoRef.current.volume = 0
+      setIsMuted(true)
+    }
+  }
 
   return (
     <motion.div
@@ -242,8 +334,8 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
               className="peer w-full cursor-pointer rounded-[1.2rem] border border-[#171717] lg:rounded-[1.8rem]"
               playsInline
               autoPlay
-              muted
               loop
+              muted={isMuted}
               {...props}
             >
               <source src={src} />
@@ -261,10 +353,59 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
                     e.stopPropagation()
                     togglePlay()
                   }}
-                  className="absolute inset-0 m-auto grid h-12 w-12 cursor-pointer place-items-center rounded-full bg-black/50 pl-1 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none backdrop-blur-sm hover:scale-105"
+                  className="absolute inset-0 m-auto grid h-16 w-16 cursor-pointer place-items-center rounded-full bg-black/50 pl-0.5 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none backdrop-blur-sm hover:scale-105"
                 >
                   <PlayIcon />
                 </motion.button>
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {seekDirection && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className={`absolute top-1/2 -translate-y-1/2 ${
+                    seekDirection === "left" ? "left-4" : "right-4"
+                  } rounded-full bg-white/20 p-3 backdrop-blur-sm`}
+                >
+                  {seekDirection === "left" ? (
+                    <svg
+                      className="h-8 w-8"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12.4 16.9C12.2 16.9 12 16.8 11.9 16.7L7.7 12.5C7.5 12.3 7.5 12 7.7 11.8L11.9 7.6C12.1 7.4 12.4 7.4 12.6 7.6C12.8 7.8 12.8 8.1 12.6 8.3L8.9 12L12.6 15.7C12.8 15.9 12.8 16.2 12.6 16.4C12.6 16.8 12.5 16.9 12.4 16.9Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M16.3 16.9C16.1 16.9 15.9 16.8 15.8 16.7L11.6 12.5C11.4 12.3 11.4 12 11.6 11.8L15.8 7.6C16 7.4 16.3 7.4 16.5 7.6C16.7 7.8 16.7 8.1 16.5 8.3L12.8 12L16.5 15.7C16.7 15.9 16.7 16.2 16.5 16.4C16.4 16.8 16.3 16.9 16.3 16.9Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-8 w-8"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M11.6 16.9C11.4 16.9 11.2 16.8 11.1 16.7C10.9 16.5 10.9 16.2 11.1 16L14.8 12.3L11.1 8.6C10.9 8.4 10.9 8.1 11.1 7.9C11.3 7.7 11.6 7.7 11.8 7.9L16 12.1C16.2 12.3 16.2 12.6 16 12.8L11.8 17C11.8 16.8 11.7 16.9 11.6 16.9Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M7.7 16.9C7.5 16.9 7.3 16.8 7.2 16.7C7 16.5 7 16.2 7.2 16L10.9 12.3L7.2 8.6C7 8.4 7 8.1 7.2 7.9C7.4 7.7 7.7 7.7 7.9 7.9L12.1 12.1C12.3 12.3 12.3 12.6 12.1 12.8L7.9 17C7.9 16.8 7.8 16.9 7.7 16.9Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
+                    {SEEK_INCREMENT}s
+                  </span>
+                </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
@@ -302,9 +443,18 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
             className="group absolute -left-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
           >
             <div className="absolute -left-1 h-full w-1 rounded-l-3xl bg-[#e6e6e6]" />
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
-              {formatTime((duration * start) / 100)}
-            </span>
+            <AnimatePresence>
+              {!areHandlesClose && (
+                <motion.span
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm"
+                >
+                  {formatTime((duration * start) / 100)}
+                </motion.span>
+              )}
+            </AnimatePresence>
             <div className="pointer-events-none absolute left-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
           </div>
           <div
@@ -317,9 +467,28 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
             className="group absolute -right-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
           >
             <div className="absolute -right-1 h-full w-1 rounded-r-3xl bg-[#e6e6e6]" />
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm">
-              {formatTime((duration * end) / 100)}
-            </span>
+            <AnimatePresence>
+              {areHandlesClose ? (
+                <motion.span
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm"
+                >
+                  {formatTime((duration * start) / 100)} -{" "}
+                  {formatTime((duration * end) / 100)}
+                </motion.span>
+              ) : (
+                <motion.span
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm"
+                >
+                  {formatTime((duration * end) / 100)}
+                </motion.span>
+              )}
+            </AnimatePresence>
             <div className="pointer-events-none absolute right-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
           </div>
         </div>
@@ -342,6 +511,34 @@ export const VideoPreview = ({ src, ...props }: ComponentProps<"video">) => {
           </div>
         </div>
       </motion.div>
+      <div
+        className="absolute bottom-32 right-4 z-30 flex items-center gap-2 rounded-full bg-black/20 p-1 backdrop-blur-sm"
+        onMouseEnter={() => setIsVolumeHovered(true)}
+        onMouseLeave={() => setIsVolumeHovered(false)}
+      >
+        <button
+          onClick={toggleMute}
+          className="grid h-8 w-8 place-items-center rounded-full text-white hover:bg-white/10"
+          aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <VolumeMutedIcon /> : <VolumeIcon />}
+        </button>
+        <div
+          className={`overflow-hidden transition-all ${
+            isVolumeHovered ? "w-24" : "w-0"
+          }`}
+        >
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={isMuted ? 0 : volume}
+            onChange={handleVolumeChange}
+            className="volume-slider h-1 w-20 mb-3 cursor-pointer appearance-none rounded-full bg-white/30"
+          />
+        </div>
+      </div>
     </motion.div>
   )
 }

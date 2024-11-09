@@ -22,7 +22,6 @@ export const VideoUploadInput = ({
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
-      // Force reload to show poster image
       videoRef.current.load()
     }
   }
@@ -62,8 +61,6 @@ export const VideoUploadInput = ({
       </label>
 
       <div className="flex flex-col items-center gap-2">
-        <hr className="h-[1px] w-full border-[#171717]" />
-        <p className="text-muted-foreground">Or try an example:</p>
         <div className="flex gap-4">
           <button
             onClick={() => onExampleClick("/earth.mp4")}
