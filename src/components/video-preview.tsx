@@ -298,22 +298,37 @@ export const VideoPreview = ({
     >
       <VideoPreviewHeader duration={duration} src={src} />
 
-      <VideoContainer
-        videoRef={videoRef}
-        isPlaying={isPlaying}
-        isMuted={isMuted}
-        seekDirection={seekDirection}
-        seekIncrement={SEEK_INCREMENT}
-        onVideoClick={togglePlay}
-        onPlayClick={(e) => {
-          e.stopPropagation()
-          togglePlay()
-        }}
-        onTimeUpdate={syncSeekWithVideoValue}
-        onLoadedMetadata={onLoadedMetadata}
-        src={src}
-        props={props}
-      />
+      <div className="relative w-full">
+        <VideoContainer
+          videoRef={videoRef}
+          isPlaying={isPlaying}
+          isMuted={isMuted}
+          seekDirection={seekDirection}
+          seekIncrement={SEEK_INCREMENT}
+          onVideoClick={togglePlay}
+          onPlayClick={(e) => {
+            e.stopPropagation()
+            togglePlay()
+          }}
+          onTimeUpdate={syncSeekWithVideoValue}
+          onLoadedMetadata={onLoadedMetadata}
+          src={src}
+          props={props}
+        />
+
+        <VolumeControl
+          volume={volume}
+          isMuted={isMuted}
+          onVolumeChange={(newVolume) => {
+            setVolume(newVolume)
+            if (videoRef.current) {
+              videoRef.current.volume = newVolume
+            }
+            setIsMuted(newVolume === 0)
+          }}
+          onMuteToggle={toggleMute}
+        />
+      </div>
 
       <TrimmerContainer
         duration={duration}
@@ -324,19 +339,6 @@ export const VideoPreview = ({
         onSeekInput={syncVideoWithSeekValue}
         onSeekMouseDown={onMouseDown}
         onSeekMouseUp={onMouseUp}
-      />
-
-      <VolumeControl
-        volume={volume}
-        isMuted={isMuted}
-        onVolumeChange={(newVolume) => {
-          setVolume(newVolume)
-          if (videoRef.current) {
-            videoRef.current.volume = newVolume
-          }
-          setIsMuted(newVolume === 0)
-        }}
-        onMuteToggle={toggleMute}
       />
     </motion.div>
   )

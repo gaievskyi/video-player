@@ -1,7 +1,6 @@
 import { AnimatePresence } from "framer-motion"
 import { useEffect, useState, type ChangeEventHandler } from "react"
 import { Spinner } from "~/components/spinner"
-import { cacheService } from "~/lib/cache-service"
 import { useRouter } from "~/lib/router"
 import { videoService } from "~/lib/video-service"
 import {
@@ -41,22 +40,31 @@ export const VideoEditor = () => {
   const videoId = params.id
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
   const [videoData, setVideoData] = useState<VideoData | null>(() => {
-    // Initialize with cached data if available
-    if (videoId) {
-      const decodedVideoId = decodeURIComponent(videoId)
-      const cached = cacheService.get(decodedVideoId)
-      if (cached?.video.src && cached.frames.length > 0) {
-        return {
-          src: cached.video.src,
-          filename: cached.video.filename || decodedVideoId,
-          frames: cached.frames,
-        }
+    if (!videoId) return null
+
+    const decodedVideoId = decodeURIComponent(videoId)
+    const exampleVideo = Object.values(EXAMPLE_VIDEOS).find(
+      (v) => v.id === decodedVideoId,
+    )
+    if (exampleVideo?.frames.length) {
+      return {
+        src: exampleVideo.src,
+        filename: exampleVideo.filename,
+        frames: exampleVideo.frames,
       }
     }
     return null
   })
 
-  // Load video data on mount or when videoId changes
+  // Reset video data when videoId changes or is removed
+  useEffect(() => {
+    if (!videoId) {
+      setVideoData(null)
+      setIsLoadingVideo(false)
+    }
+  }, [videoId])
+
+  // Load video data when videoId changes
   useEffect(() => {
     let isMounted = true
 
@@ -99,25 +107,8 @@ export const VideoEditor = () => {
         return
       }
 
-      // Check cache first
-      const cached = cacheService.get(decodedVideoId)
-      if (cached?.video.src && cached.frames.length > 0) {
-        if (isMounted) {
-          setVideoData({
-            src: cached.video.src,
-            filename: cached.video.filename || decodedVideoId,
-            frames: cached.frames,
-          })
-        }
-        return
-      }
-
-      // Only show loading state if we need to fetch
-      if (isMounted) {
-        setIsLoadingVideo(true)
-      }
-
       try {
+        // Always get fresh video data to ensure valid blob URLs
         const video = await videoService.getVideo(decodedVideoId)
         if (video && isMounted) {
           setVideoData({
@@ -125,9 +116,6 @@ export const VideoEditor = () => {
             filename: video.filename,
             frames: video.frames,
           })
-        } else if (!video && isMounted) {
-          console.error("Video not found")
-          navigate("/")
         }
       } catch (error) {
         console.error("Failed to load video:", error)
@@ -141,16 +129,21 @@ export const VideoEditor = () => {
       }
     }
 
-    loadVideo()
+    if (videoId) {
+      setIsLoadingVideo(true)
+      loadVideo()
+    }
 
     return () => {
       isMounted = false
+      // Clean up video data when unmounting or changing videos
+      if (videoData?.src.startsWith("blob:")) {
+        URL.revokeObjectURL(videoData.src)
+      }
     }
   }, [videoId, navigate])
 
-  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (
-    event,
-  ) => {
+  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
     const file = event.target.files?.item(0)
     if (!(file instanceof File)) return
 
@@ -177,13 +170,6 @@ export const VideoEditor = () => {
     navigate(`/videos/${encodeURIComponent(filename)}`)
   }
 
-  // Reset video data when unmounting
-  useEffect(() => {
-    return () => {
-      setVideoData(null)
-    }
-  }, [])
-
   return (
     <VideoEditorContextProvider
       value={{
@@ -193,7 +179,7 @@ export const VideoEditor = () => {
       }}
     >
       <CodecSupportIndicator />
-      <div className="container relative m-auto flex h-[100svh] w-[52rem] flex-col items-center justify-center py-8">
+      <div className="container relative m-auto flex h-[100svh] w-full max-w-[52rem] flex-col items-center justify-center py-8">
         <AnimatePresence mode="wait">
           {videoData ? (
             <VideoPreview key={videoData.filename} src={videoData.src} />

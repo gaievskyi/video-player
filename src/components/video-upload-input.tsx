@@ -1,7 +1,9 @@
 import type { ComponentProps } from "react"
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { AttachFileIcon } from '~/components/icons/attach-file-icon'
 import type { UploadedVideo } from "~/lib/indexed-db"
 import { videoService } from "~/lib/video-service"
+import { TrashIcon } from '~/components/icons/trash-icon'
 
 const EXAMPLE_VIDEOS = {
   bunny: {
@@ -21,6 +23,8 @@ type VideoUploadInputProps = ComponentProps<"input"> & {
   onExampleClick: (filename: string) => void
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
+
+
 
 export const VideoUploadInput = ({
   onChange,
@@ -75,6 +79,19 @@ export const VideoUploadInput = ({
     [handleVideoHover],
   )
 
+  const handleDelete = async (e: React.MouseEvent, filename: string) => {
+    e.preventDefault() // Prevent triggering the parent button click
+    e.stopPropagation() // Prevent event bubbling
+
+    try {
+      await videoService.deleteVideo(filename)
+      // Refresh the list after deletion
+      await loadUploadedVideos()
+    } catch (error) {
+      console.error("Failed to delete video:", error)
+    }
+  }
+
   return (
     <div className="flex flex-col items-center gap-8">
       <label
@@ -82,20 +99,7 @@ export const VideoUploadInput = ({
         className="group flex h-48 w-80 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#171717] bg-card transition-all hover:border-gray-400 hover:bg-card/80"
       >
         <div className="flex flex-col items-center justify-center px-6 text-center">
-          <svg
-            className="mb-4 h-10 w-10 text-gray-400 transition-colors group-hover:text-gray-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 16l-4-4m0 0l4-4m-4 4h16m-2-4v8M6 8v8"
-            />
-          </svg>
+          <AttachFileIcon />
           <p className="mb-2 text-sm font-semibold text-gray-200">Open video</p>
           <p className="text-xs text-gray-400">
             Drag and drop or click to select
@@ -175,13 +179,22 @@ export const VideoUploadInput = ({
                   <source src={video.src} type="video/mp4" />
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-2">
-                  <span className="block truncate text-xs font-medium text-white">
-                    {video.filename}
-                  </span>
-                  <span className="text-[10px] text-gray-300">
-                    {new Date(video.createdAt).toLocaleDateString()}
-                  </span>
+                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2">
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate text-xs font-medium text-white">
+                      {video.filename}
+                    </span>
+                    <span className="text-[10px] text-gray-300">
+                      {new Date(video.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => handleDelete(e, video.filename)}
+                    className="ml-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-gray-300 hover:text-white"
+                    title="Remove video"
+                  >
+                    <TrashIcon />
+                  </button>
                 </div>
               </button>
             ))}

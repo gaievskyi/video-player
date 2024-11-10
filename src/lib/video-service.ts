@@ -47,9 +47,7 @@ export class VideoService {
       }
 
       await dbService.saveVideo(video)
-
-      // Cache the uploaded video
-      cacheService.set(filename, video, frames)
+      await cacheService.set(filename, video, frames)
 
       return {
         filename,
@@ -94,20 +92,23 @@ export class VideoService {
       // Check fast cache first
       const cached = cacheService.get(filename)
       if (cached?.video.src && cached.frames.length > 0) {
-        // Return cached data with valid URL
-        const url = this.ensureValidURL(cached.video.src)
+        // For cached videos, create a new blob URL to ensure it's valid
+        const video = await dbService.getVideo(filename)
+        const url = video
+          ? URL.createObjectURL(video.videoBlob)
+          : cached.video.src
+
         return {
           id: cached.video.id || "",
           src: url,
           filename: cached.video.filename || filename,
-          videoBlob: new Blob(),
+          videoBlob: video?.videoBlob || new Blob(),
           lastModified: Date.now(),
           createdAt: new Date().toISOString(),
           frames: cached.frames,
         }
       }
 
-      // Only proceed to IndexedDB if no cache exists
       const video = await dbService.getVideo(filename)
       if (!video) {
         throw new Error("Video not found")
@@ -127,7 +128,7 @@ export class VideoService {
       }
 
       // Cache the result
-      cacheService.set(filename, videoData, frames)
+      await cacheService.set(filename, videoData, frames)
 
       return videoData
     } catch (error) {
@@ -138,12 +139,21 @@ export class VideoService {
 
   async deleteVideo(filename: string): Promise<void> {
     try {
+      // Remove from IndexedDB
       await dbService.clearVideo(filename)
+
+      // Remove from cache
+      cacheService.remove(filename)
+
+      // Clean up memory cache and blob URL
       const cached = this.videoCache.get(filename)
       if (cached) {
         URL.revokeObjectURL(cached.url)
         this.videoCache.delete(filename)
       }
+
+      // Clean up preload cache
+      this.preloadCache.delete(filename)
     } catch (error) {
       console.error("Error deleting video:", error)
       throw error
@@ -157,7 +167,7 @@ export class VideoService {
 
   cleanup(): void {
     // Only clear memory cache
-    this.videoCache.forEach((cached) => {
+    this.videoCache.forEach((cached: CachedVideo) => {
       if (cached.url.startsWith("blob:")) {
         URL.revokeObjectURL(cached.url)
       }
@@ -196,30 +206,6 @@ export class VideoService {
     }
 
     return preloadPromise
-  }
-
-  private ensureValidURL(url: string): string {
-    try {
-      // Check if URL is still valid
-      const urlObject = new URL(url)
-      if (urlObject.protocol === "blob:") {
-        try {
-          // Try to fetch the blob URL
-          fetch(url)
-          return url
-        } catch {
-          // If blob URL is invalid, create a new one from cache
-          const cached = this.videoCache.get(url)
-          if (cached) {
-            return URL.createObjectURL(new Blob([cached.url]))
-          }
-        }
-      }
-      return url
-    } catch {
-      // If URL is invalid, return original (might be a relative path)
-      return url
-    }
   }
 }
 

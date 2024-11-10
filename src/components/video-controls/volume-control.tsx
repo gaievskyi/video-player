@@ -26,7 +26,6 @@ export const VolumeControl = ({
 
   const handleMuteToggle = () => {
     if (!isMuted && volume === 0) {
-      // If volume is 0, restore to previous non-zero volume
       onVolumeChange(previousVolume || 0.5)
     }
     onMuteToggle()
@@ -39,7 +38,7 @@ export const VolumeControl = ({
 
   return (
     <div
-      className="absolute bottom-4 right-6 z-30 flex items-center rounded-full bg-black/20 p-1 backdrop-blur-sm md:bottom-28"
+      className="absolute bottom-4 right-4 z-50 flex items-center rounded-full bg-black/20 p-1 backdrop-blur-sm"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isDragging && setIsHovered(false)}
     >
@@ -66,7 +65,7 @@ export const VolumeControl = ({
           onMouseUp={handleMouseUp}
           onTouchStart={handleMouseDown}
           onTouchEnd={handleMouseUp}
-          className="volume-slider mb-3 h-1 w-20 cursor-pointer appearance-none rounded-full bg-white/30 transition-all hover:bg-white/50"
+          className="volume-slider h-1 w-20 cursor-pointer appearance-none rounded-full bg-white/30 transition-all hover:bg-white/50"
           title={`Volume: ${Math.round(volume * 100)}%`}
         />
       </div>
