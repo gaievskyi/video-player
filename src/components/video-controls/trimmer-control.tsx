@@ -85,7 +85,7 @@ export const TrimmerControl = ({
         className="group absolute -left-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
       >
         <div className="absolute -left-1 h-full w-1 rounded-l-3xl bg-[#e6e6e6]" />
-        <div className="pointer-events-none absolute left-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
+        <div className="pointer-events-none absolute left-[3px] top-4 lg:top-5 block h-7 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
       </div>
 
       <div
@@ -97,7 +97,7 @@ export const TrimmerControl = ({
         className="group absolute -right-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
       >
         <div className="absolute -right-1 h-full w-1 rounded-r-3xl bg-[#e6e6e6]" />
-        <div className="pointer-events-none absolute right-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
+        <div className="pointer-events-none absolute right-[3px] top-4 lg:top-5 block h-7 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
       </div>
 
       <div className="absolute z-30 h-full w-full">{children}</div>
