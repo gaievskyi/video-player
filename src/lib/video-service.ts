@@ -115,10 +115,12 @@ export class VideoService {
       }
 
       const url = URL.createObjectURL(video.videoBlob)
+      const containerWidth = window.innerWidth
       const frames = await VideoToFrames.getFrames(
         url,
         21,
         VideoToFramesMethod.totalFrames,
+        containerWidth,
       )
 
       const videoData = {

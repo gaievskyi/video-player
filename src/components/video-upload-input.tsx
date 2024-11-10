@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { AttachFileIcon } from '~/components/icons/attach-file-icon'
+import { AttachFileIcon } from "~/components/icons/attach-file-icon"
 import type { UploadedVideo } from "~/lib/indexed-db"
 import { videoService } from "~/lib/video-service"
-import { TrashIcon } from '~/components/icons/trash-icon'
+import { TrashIcon } from "~/components/icons/trash-icon"
 
 const EXAMPLE_VIDEOS = {
   bunny: {
@@ -23,8 +23,6 @@ type VideoUploadInputProps = ComponentProps<"input"> & {
   onExampleClick: (filename: string) => void
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
-
-
 
 export const VideoUploadInput = ({
   onChange,
@@ -180,7 +178,7 @@ export const VideoUploadInput = ({
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2">
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium text-white">
                       {video.filename}
                     </span>
@@ -190,7 +188,7 @@ export const VideoUploadInput = ({
                   </div>
                   <button
                     onClick={(e) => handleDelete(e, video.filename)}
-                    className="ml-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-gray-300 hover:text-white"
+                    className="ml-2 rounded-full p-1.5 text-gray-300 opacity-0 transition-all hover:bg-white/10 hover:text-white group-hover:opacity-100"
                     title="Remove video"
                   >
                     <TrashIcon />

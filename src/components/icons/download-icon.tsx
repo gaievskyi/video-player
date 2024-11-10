@@ -1,29 +1,27 @@
-
-import type { Variants } from 'framer-motion';
-import { motion, useAnimation } from 'framer-motion';
+import type { Variants } from "framer-motion"
+import { motion, useAnimation } from "framer-motion"
 
 const arrowVariants: Variants = {
   normal: { y: 0 },
   animate: {
     y: 2,
     transition: {
-      type: 'spring',
+      type: "spring",
       stiffness: 200,
       damping: 10,
       mass: 1,
     },
   },
-};
-
+}
 
 const DownloadIcon = () => {
-  const controls = useAnimation();
+  const controls = useAnimation()
 
   return (
     <div
-      className="cursor-pointer select-none p-2 hover:bg-accent rounded-md transition-colors duration-200 flex items-center justify-center"
-      onMouseEnter={() => controls.start('animate')}
-      onMouseLeave={() => controls.start('normal')}
+      className="hover:bg-accent flex cursor-pointer select-none items-center justify-center rounded-md p-2 transition-colors duration-200"
+      onMouseEnter={() => controls.start("animate")}
+      onMouseLeave={() => controls.start("normal")}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -43,7 +41,7 @@ const DownloadIcon = () => {
         </motion.g>
       </svg>
     </div>
-  );
-};
+  )
+}
 
-export { DownloadIcon };
+export { DownloadIcon }

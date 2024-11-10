@@ -29,18 +29,18 @@ export class VideoProcessor {
     // Determine output format and codec
     const isMP4 = videoFile.type.includes("mp4")
     const supportedTypes = [
-      'video/mp4;codecs=avc1.42E01E',
-      'video/mp4;codecs=h264',
-      'video/webm;codecs=vp8',
-      'video/webm;codecs=vp9',
+      "video/mp4;codecs=avc1.42E01E",
+      "video/mp4;codecs=h264",
+      "video/webm;codecs=vp8",
+      "video/webm;codecs=vp9",
     ]
 
-    let mimeType = 'video/webm;codecs=vp8' // default fallback
+    let mimeType = "video/webm;codecs=vp8" // default fallback
 
     // Find the first supported mime type
     if (isMP4) {
-      const mp4Type = supportedTypes.find(type =>
-        type.includes('mp4') && MediaRecorder.isTypeSupported(type)
+      const mp4Type = supportedTypes.find(
+        (type) => type.includes("mp4") && MediaRecorder.isTypeSupported(type),
       )
       if (mp4Type) {
         mimeType = mp4Type
@@ -61,7 +61,9 @@ export class VideoProcessor {
     return new Promise((resolve, reject) => {
       mediaRecorder.onstop = () => {
         URL.revokeObjectURL(video.src)
-        const outputType = mimeType.startsWith('video/mp4') ? 'video/mp4' : 'video/webm'
+        const outputType = mimeType.startsWith("video/mp4")
+          ? "video/mp4"
+          : "video/webm"
         const blob = new Blob(chunks, { type: outputType })
         resolve(blob)
       }
@@ -89,11 +91,11 @@ export class VideoProcessor {
   // Helper method to check if the browser supports video recording
   static checkSupport(): boolean {
     const supportedTypes = [
-      'video/mp4;codecs=avc1.42E01E',
-      'video/mp4;codecs=h264',
-      'video/webm;codecs=vp8',
-      'video/webm;codecs=vp9',
+      "video/mp4;codecs=avc1.42E01E",
+      "video/mp4;codecs=h264",
+      "video/webm;codecs=vp8",
+      "video/webm;codecs=vp9",
     ]
-    return supportedTypes.some(type => MediaRecorder.isTypeSupported(type))
+    return supportedTypes.some((type) => MediaRecorder.isTypeSupported(type))
   }
 }

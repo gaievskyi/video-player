@@ -143,7 +143,9 @@ export const VideoEditor = () => {
     }
   }, [videoId, navigate])
 
-  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
+  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (
+    event,
+  ) => {
     const file = event.target.files?.item(0)
     if (!(file instanceof File)) return
 
@@ -179,7 +181,7 @@ export const VideoEditor = () => {
       }}
     >
       <CodecSupportIndicator />
-      <div className="container relative m-auto flex h-[100svh] w-full lg:w-[52rem] xl:w-[54rem] flex-col items-center justify-center py-8">
+      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center py-8 lg:w-[52rem]">
         <AnimatePresence mode="wait">
           {videoData ? (
             <VideoPreview key={videoData.filename} src={videoData.src} />

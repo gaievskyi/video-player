@@ -7,6 +7,7 @@ import { useVideoEditorContext } from "~/components/video-editor-context"
 import { useRouter } from "~/lib/router"
 import { formatTime } from "~/lib/utils"
 import { SeekIndicator } from "./seek-indicator"
+import { VolumeControl } from "./volume-control"
 
 type VideoContainerProps = {
   videoRef: React.RefObject<HTMLVideoElement>
@@ -21,6 +22,9 @@ type VideoContainerProps = {
   src: string
   duration: number
   props: Omit<ComponentProps<"video">, "ref">
+  volume: number
+  onVolumeChange: (volume: number) => void
+  onMuteToggle: () => void
 }
 
 export const VideoContainer = ({
@@ -36,6 +40,9 @@ export const VideoContainer = ({
   src,
   duration,
   props,
+  volume,
+  onVolumeChange,
+  onMuteToggle,
 }: VideoContainerProps) => {
   const { navigate } = useRouter()
   const { filename } = useVideoEditorContext()
@@ -183,11 +190,8 @@ export const VideoContainer = ({
       <AnimatePresence mode="wait">
         {isHovering && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
             onClick={onPlayClick}
-            className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-transform hover:scale-105 active:scale-95"
+            className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm"
           >
             {isPlaying ? (
               <PauseIcon className="h-8 w-8" />
@@ -207,6 +211,14 @@ export const VideoContainer = ({
           />
         )}
       </AnimatePresence>
+
+      {/* Volume Control */}
+      <VolumeControl
+        volume={volume}
+        isMuted={isMuted}
+        onVolumeChange={onVolumeChange}
+        onMuteToggle={onMuteToggle}
+      />
     </div>
   )
 }

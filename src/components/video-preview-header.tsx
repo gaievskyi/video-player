@@ -32,8 +32,8 @@ export const VideoPreviewHeader = ({
   const isVideoTrimmed = start > 0 || end < duration
 
   return (
-    <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-black/20 px-6 py-4 backdrop-blur-sm">
-      <div className="flex items-center gap-3">
+    <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-[#0d0c0b] p-4 backdrop-blur-sm lg:mt-6">
+      <div className="flex items-center gap-2">
         <FileStackIcon />
         <div className="flex flex-col">
           <span className="max-w-[200px] truncate font-medium">{name}</span>

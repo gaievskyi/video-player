@@ -28,7 +28,7 @@ export const SaveButton = ({
 
       if (!VideoProcessor.checkSupport()) {
         throw new Error(
-          "Your browser doesn't support video processing.",
+          "Your browser doesn't support video processing. Please try a modern browser like Chrome or Firefox.",
         )
       }
 
@@ -37,21 +37,16 @@ export const SaveButton = ({
 
       // Get original filename and extension
       const fileName = videoSrc.split("/").pop() || "video"
+      const originalFormat =
+        videoFile.type.split("/")[1]?.split(";")[0] || "mp4"
 
-      // Extract extension from either filename or blob type
-      let extension = fileName.split(".").pop()?.toLowerCase() || ""
-      if (!extension || extension.length > 4) { // Handle cases where the "extension" might be a UUID or invalid
-        extension = videoFile.type.split("/")[1] || ""
-      }
-
-      // Clean up extension (remove any parameters or extra data)
-      extension = extension.split(";")[0].trim()
-
-      // Validate file format
-      if (!["mp4", "webm"].includes(extension)) {
-        throw new Error(
-          "This video format is not supported yet. Please use MP4 or WebM videos or try a different browser."
-        )
+      // Determine output format based on browser support
+      let outputFormat = originalFormat
+      if (!["mp4", "webm"].includes(outputFormat.toLowerCase())) {
+        // Default to WebM if original format is not supported
+        outputFormat = MediaRecorder.isTypeSupported("video/mp4;codecs=h264")
+          ? "mp4"
+          : "webm"
       }
 
       const processor = new VideoProcessor(startTime, endTime)
@@ -59,14 +54,15 @@ export const SaveButton = ({
 
       // Get base filename without extension
       const nameWithoutExt = fileName.split(".")[0]
-      // If nameWithoutExt is too long or looks like a UUID, use "video" instead
-      const finalBaseName = /^[0-9a-f-]{32,}$/i.test(nameWithoutExt) ? "video" : nameWithoutExt
+      const finalBaseName = /^[0-9a-f-]{32,}$/i.test(nameWithoutExt)
+        ? "video"
+        : nameWithoutExt
 
       // Create download link
       const url = URL.createObjectURL(trimmedVideo)
       const a = document.createElement("a")
       a.href = url
-      a.download = `${finalBaseName}-trimmed.${extension}`
+      a.download = `${finalBaseName}-trimmed.${outputFormat}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -124,7 +120,7 @@ export const SaveButton = ({
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
               >
-                <Spinner className="size-3.5" particleClassName="bg-white" />
+                <Spinner className="size-6" particleClassName="bg-white" />
                 <motion.span layout className="tracking-wide text-white">
                   Processing
                 </motion.span>

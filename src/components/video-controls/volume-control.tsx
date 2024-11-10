@@ -38,9 +38,10 @@ export const VolumeControl = ({
 
   return (
     <div
-      className="absolute bottom-4 right-4 z-50 flex items-center rounded-full bg-black/20 p-1 backdrop-blur-sm"
+      className="absolute bottom-4 right-4 z-10 flex items-center rounded-full bg-black/60 p-1 backdrop-blur-sm"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isDragging && setIsHovered(false)}
+      onClick={(e) => e.stopPropagation()}
     >
       <button
         onClick={handleMuteToggle}

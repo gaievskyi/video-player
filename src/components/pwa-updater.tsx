@@ -16,7 +16,7 @@ export function PWAUpdater() {
       onOfflineReady() {
         setOfflineReady(true)
         setTimeout(() => setOfflineReady(false), 3000)
-      }
+      },
     })
 
     return () => {
@@ -29,7 +29,12 @@ export function PWAUpdater() {
     setNeedRefresh(false)
   }
 
-  const shouldShow = needRefresh || offlineReady || !isOnline || isReconnecting || showOnlineStatus
+  const shouldShow =
+    needRefresh ||
+    offlineReady ||
+    !isOnline ||
+    isReconnecting ||
+    showOnlineStatus
 
   return (
     <AnimatePresence mode="wait">
@@ -47,10 +52,10 @@ export function PWAUpdater() {
               <div
                 className={`h-2 w-2 rounded-full transition-colors duration-300 ${
                   !isOnline
-                    ? 'bg-yellow-500 animate-pulse'
+                    ? "animate-pulse bg-yellow-500"
                     : isReconnecting
-                    ? 'bg-blue-500 animate-pulse'
-                    : 'bg-green-500'
+                      ? "animate-pulse bg-blue-500"
+                      : "bg-green-500"
                 }`}
               />
               {!isOnline && <span>Offline mode</span>}
@@ -76,27 +81,31 @@ export function PWAUpdater() {
                   <span>Online</span>
                 </motion.div>
               )}
-              {isOnline && !isReconnecting && !showOnlineStatus && offlineReady && (
-                <span>I can work offline</span>
-              )}
-              {isOnline && !isReconnecting && !showOnlineStatus && needRefresh && (
-                <>
-                  <span>New version available</span>
-                  <button
-                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium hover:bg-white/20"
-                    onClick={() => location.reload()}
-                  >
-                    Update
-                  </button>
-                  <button
-                    className="rounded-full bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
-                    onClick={close}
-                    aria-label="Dismiss"
-                  >
-                    ✕
-                  </button>
-                </>
-              )}
+              {isOnline &&
+                !isReconnecting &&
+                !showOnlineStatus &&
+                offlineReady && <span>I can work offline</span>}
+              {isOnline &&
+                !isReconnecting &&
+                !showOnlineStatus &&
+                needRefresh && (
+                  <>
+                    <span>New version available</span>
+                    <button
+                      className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium hover:bg-white/20"
+                      onClick={() => location.reload()}
+                    >
+                      Update
+                    </button>
+                    <button
+                      className="rounded-full bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+                      onClick={close}
+                      aria-label="Dismiss"
+                    >
+                      ✕
+                    </button>
+                  </>
+                )}
             </div>
           </div>
         </motion.div>

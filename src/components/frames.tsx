@@ -1,59 +1,87 @@
+import { useQueryStates } from "nuqs"
+import { useEffect, useRef, useState } from "react"
+import { parseAsTime } from "~/lib/time-query-parser"
+import { type Frame } from "~/lib/video-to-frames"
 import { useFrames } from "./video-editor-context"
 
 export const Frames = () => {
-  const frames = useFrames()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [frames, setFrames] = useState<Frame[]>([])
+  const videoFrames = useFrames()
+  const [{ start, end }] = useQueryStates({
+    start: parseAsTime.withDefault(0),
+    end: parseAsTime.withDefault(0),
+  })
+
+  // Initialize frames when videoFrames change
+  useEffect(() => {
+    if (videoFrames && videoFrames.length > 0) {
+      setFrames(videoFrames)
+    }
+  }, [videoFrames])
+
+  useEffect(() => {
+    if (!containerRef.current || !frames.length) return
+
+    const updateFrameDimensions = (width: number) => {
+      if (width === 0) return
+
+      const aspectRatio = frames[0].height / frames[0].width
+      const frameWidth = width / frames.length
+      const frameHeight = frameWidth * aspectRatio
+
+      setFrames((prevFrames) =>
+        prevFrames.map((frame) => ({
+          ...frame,
+          width: frameWidth,
+          height: frameHeight,
+        })),
+      )
+    }
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        updateFrameDimensions(entry.contentRect.width)
+      }
+    })
+
+    // Initial size calculation
+    updateFrameDimensions(containerRef.current.clientWidth)
+
+    resizeObserver.observe(containerRef.current)
+    return () => resizeObserver.disconnect()
+  }, [frames.length])
+
+  if (!frames.length) return null
 
   return (
-    <div className="relative flex w-full overflow-hidden">
-      {/* Gradient overlays for iOS-like effect */}
-      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-black/20 to-transparent" />
-      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-black/20 to-transparent" />
-
-      {/* Frames container */}
-      <div className="flex w-full">
-        {frames.map((frame, index) => (
-          <div key={frame.id} className="relative min-w-0 flex-1">
+    <div
+      ref={containerRef}
+      className="absolute inset-0 flex h-full w-full overflow-hidden rounded-xl"
+    >
+      {frames.map((frame) => {
+        const isInRange = Number(frame.id) >= start && Number(frame.id) <= end
+        return (
+          <div
+            key={frame.id}
+            className="relative h-full flex-1"
+            style={{
+              filter: isInRange ? "none" : "blur(2px)",
+              transition: "filter 0.2s ease-in-out",
+            }}
+          >
             <img
-              draggable={false}
               src={frame.src}
-              alt="Frame"
-              className="h-full w-full select-none object-cover"
-              style={{
-                imageRendering: "crisp-edges",
-              }}
-            />
-            {/* iOS-style elegant separator */}
-            {index < frames.length - 1 && (
-              <>
-                {/* Main separator line */}
-                <div
-                  className="pointer-events-none absolute right-0 top-0 h-full w-[1px]"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.15) 80%, transparent 100%)",
-                  }}
-                />
-                {/* Subtle shadow line */}
-                <div
-                  className="pointer-events-none absolute right-[1px] top-0 h-full w-[1px]"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.1) 80%, transparent 100%)",
-                  }}
-                />
-              </>
-            )}
-            {/* Top and bottom subtle gradients */}
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 8%, transparent 92%, rgba(0,0,0,0.2) 100%)",
-              }}
+              alt={`Frame ${frame.id}`}
+              width={frame.width}
+              height={frame.height}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           </div>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }

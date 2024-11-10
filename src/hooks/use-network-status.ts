@@ -28,7 +28,11 @@ function getServerSnapshot() {
 }
 
 export function useNetworkStatus(): NetworkStatus {
-  const isOnline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const isOnline = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  )
   const [isReconnecting, setIsReconnecting] = useState(false)
   const [showOnlineStatus, setShowOnlineStatus] = useState(false)
 
@@ -68,6 +72,6 @@ export function useNetworkStatus(): NetworkStatus {
   return {
     isOnline,
     isReconnecting,
-    showOnlineStatus
+    showOnlineStatus,
   }
 }

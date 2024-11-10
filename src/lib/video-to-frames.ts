@@ -6,17 +6,22 @@ export enum VideoToFramesMethod {
 export type Frame = {
   id: string
   src: string
+  width: number
+  height: number
 }
 
 export class VideoToFrames {
   private static readonly CHUNK_SIZE = 5 // Process frames in smaller chunks
   private static readonly MAX_DIMENSION = 1280 // Max dimension for frame extraction
   private static readonly QUALITY = 0.75 // Slightly reduce quality for better memory usage
+  private static readonly MIN_FRAMES = 12 // Minimum number of frames
+  private static readonly MAX_FRAMES = 24 // Maximum number of frames
 
   public static async getFrames(
     videoUrl: string,
     amount: number,
     type: VideoToFramesMethod = VideoToFramesMethod.fps,
+    containerWidth?: number,
   ): Promise<Frame[]> {
     return new Promise((resolve, reject) => {
       const frames: Frame[] = []
@@ -30,12 +35,8 @@ export class VideoToFrames {
           video.load()
           video = null
         }
-        if (canvas) {
-          canvas = null
-        }
-        if (context) {
-          context = null
-        }
+        canvas = null
+        context = null
       }
 
       try {
@@ -46,6 +47,17 @@ export class VideoToFrames {
 
         video.addEventListener("loadeddata", async () => {
           try {
+            // Calculate optimal frame count based on container width
+            const optimalFrameCount = containerWidth
+              ? Math.max(
+                  this.MIN_FRAMES,
+                  Math.min(
+                    Math.floor(containerWidth / 100), // Roughly 100px per frame
+                    this.MAX_FRAMES,
+                  ),
+                )
+              : Math.min(amount, this.MAX_FRAMES)
+
             // Calculate scaled dimensions
             const scale = Math.min(
               1,
@@ -66,13 +78,13 @@ export class VideoToFrames {
             }
 
             const duration = video!.duration
-            const desiredFrameCount = Math.min(24, amount) // Limit max frames
             const totalFrames =
               type === VideoToFramesMethod.fps
-                ? Math.min(duration * amount, desiredFrameCount)
-                : Math.min(amount, desiredFrameCount)
+                ? Math.min(duration * amount, optimalFrameCount)
+                : Math.min(amount, optimalFrameCount)
 
-            const timeStep = duration / totalFrames
+            // Ensure frames are evenly distributed across the video duration
+            const timeStep = duration / (totalFrames - 1) // Subtract 1 to include both start and end frames
 
             // Process frames in chunks
             for (let i = 0; i < totalFrames; i += this.CHUNK_SIZE) {
@@ -145,6 +157,8 @@ export class VideoToFrames {
           resolve({
             id: time.toFixed(2),
             src: frame,
+            width,
+            height,
           })
         } catch (error) {
           reject(error)

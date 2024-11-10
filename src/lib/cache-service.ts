@@ -45,7 +45,9 @@ export class CacheService {
     })
   }
 
-  private loadEntriesFromStorage(storage: Storage): [string, CachedVideoData][] {
+  private loadEntriesFromStorage(
+    storage: Storage,
+  ): [string, CachedVideoData][] {
     const entries: [string, CachedVideoData][] = []
 
     for (let i = 0; i < storage.length; i++) {
@@ -95,7 +97,9 @@ export class CacheService {
 
     try {
       // Optimize frames before storing
-      const optimizedFrames = await this.optimizeFrames(frames.slice(0, MAX_FRAMES))
+      const optimizedFrames = await this.optimizeFrames(
+        frames.slice(0, MAX_FRAMES),
+      )
 
       const data: CachedVideoData = {
         video: {
@@ -133,7 +137,11 @@ export class CacheService {
     }
   }
 
-  private saveToStorage(storage: Storage, filename: string, data: CachedVideoData) {
+  private saveToStorage(
+    storage: Storage,
+    filename: string,
+    data: CachedVideoData,
+  ) {
     storage.setItem(
       this.getKey(filename),
       JSON.stringify({
@@ -142,7 +150,7 @@ export class CacheService {
         filename: data.video.filename,
         frames: data.frames,
         timestamp: data.timestamp,
-      })
+      }),
     )
   }
 
@@ -173,7 +181,10 @@ export class CacheService {
     return null
   }
 
-  private getFromStorage(storage: Storage, filename: string): { video: Partial<UploadedVideo>; frames: Frame[] } | null {
+  private getFromStorage(
+    storage: Storage,
+    filename: string,
+  ): { video: Partial<UploadedVideo>; frames: Frame[] } | null {
     try {
       const cached = storage.getItem(this.getKey(filename))
       if (cached) {
@@ -205,10 +216,12 @@ export class CacheService {
 
   private async optimizeFrames(frames: Frame[]): Promise<Frame[]> {
     const optimizedFrames = await Promise.all(
-      frames.map(async frame => ({
+      frames.map(async (frame) => ({
         id: frame.id,
-        src: await this.optimizeDataUrl(frame.src)
-      }))
+        src: await this.optimizeDataUrl(frame.src),
+        width: frame.width,
+        height: frame.height,
+      })),
     )
     return optimizedFrames
   }
@@ -224,8 +237,8 @@ export class CacheService {
     return new Promise((resolve) => {
       const img = new Image()
       img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')!
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")!
 
         let { width, height } = img
         const maxDimension = 320
@@ -244,10 +257,10 @@ export class CacheService {
         canvas.height = height
 
         ctx.imageSmoothingEnabled = true
-        ctx.imageSmoothingQuality = 'medium'
+        ctx.imageSmoothingQuality = "medium"
         ctx.drawImage(img, 0, 0, width, height)
 
-        resolve(canvas.toDataURL('image/jpeg', 0.6))
+        resolve(canvas.toDataURL("image/jpeg", 0.6))
       }
       img.src = dataUrl
     })
@@ -258,13 +271,15 @@ export class CacheService {
   }
 
   private calculateSize(data: CachedVideoData): number {
-    return new Blob([JSON.stringify({
-      id: data.video.id,
-      src: data.video.src,
-      filename: data.video.filename,
-      frames: data.frames,
-      timestamp: data.timestamp,
-    })]).size
+    return new Blob([
+      JSON.stringify({
+        id: data.video.id,
+        src: data.video.src,
+        filename: data.video.filename,
+        frames: data.frames,
+        timestamp: data.timestamp,
+      }),
+    ]).size
   }
 
   private getStorageSize(storage: Storage): number {
@@ -282,14 +297,12 @@ export class CacheService {
     // Collect entries from both storages
     const localEntries = this.loadEntriesFromStorage(localStorage)
     const sessionEntries = this.loadEntriesFromStorage(sessionStorage)
-    const allEntries = [...localEntries, ...sessionEntries]
-      .sort(([, a], [, b]) => a.timestamp - b.timestamp)
+    const allEntries = [...localEntries, ...sessionEntries].sort(
+      ([, a], [, b]) => a.timestamp - b.timestamp,
+    )
 
     let freedSpace = 0
-    while (
-      allEntries.length > 0 &&
-      freedSpace < requiredSpace
-    ) {
+    while (allEntries.length > 0 && freedSpace < requiredSpace) {
       const entry = allEntries.shift()
       if (entry) {
         const filename = entry[0].replace(CACHE_PREFIX, "")

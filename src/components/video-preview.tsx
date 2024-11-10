@@ -16,7 +16,7 @@ import { parseAsTime } from "~/lib/time-query-parser"
 import { formatTime } from "~/lib/utils"
 import { TrimmerContainer } from "./video-controls/trimmer-container"
 import { VideoContainer } from "./video-controls/video-container"
-import { VolumeControl } from "./video-controls/volume-control"
+
 import { VideoPreviewHeader } from "./video-preview-header"
 
 export const VideoPreview = ({
@@ -303,7 +303,7 @@ export const VideoPreview = ({
         <VideoPreviewHeader duration={duration} src={src} />
       </div>
 
-      <div className="relative min-h-0 w-full flex-1">
+      <div className="relative min-h-0 w-full">
         <VideoContainer
           videoRef={videoRef}
           isPlaying={isPlaying}
@@ -319,12 +319,7 @@ export const VideoPreview = ({
           onLoadedMetadata={onLoadedMetadata}
           src={src}
           duration={duration}
-          props={{ ...props, autoPlay: true }}
-        />
-
-        <VolumeControl
           volume={volume}
-          isMuted={isMuted}
           onVolumeChange={(newVolume) => {
             setVolume(newVolume)
             if (videoRef.current) {
@@ -333,10 +328,11 @@ export const VideoPreview = ({
             setIsMuted(newVolume === 0)
           }}
           onMuteToggle={toggleMute}
+          props={{ ...props, autoPlay: true }}
         />
       </div>
 
-      <div className="w-full py-4 sm:py-0">
+      <div className="w-full py-6 sm:py-0">
         <TrimmerContainer
           duration={duration}
           seekRef={seekRef}

@@ -1,13 +1,13 @@
-import { AnimatePresence, motion, useDragControls } from "framer-motion"
+import { motion, useDragControls } from "framer-motion"
 import { useQueryStates } from "nuqs"
 import { parseAsTime } from "~/lib/time-query-parser"
-import { formatTime } from "~/lib/utils"
 
-type TrimmerControlProps = {
+interface TrimmerControlProps {
   duration: number
   onTrimStart: (e: React.MouseEvent | React.TouchEvent) => void
   onTrimEnd: (e: React.MouseEvent | React.TouchEvent) => void
   onTrimComplete: () => void
+  children?: React.ReactNode
 }
 
 export const TrimmerControl = ({
@@ -15,6 +15,7 @@ export const TrimmerControl = ({
   onTrimStart,
   onTrimEnd,
   onTrimComplete,
+  children,
 }: TrimmerControlProps) => {
   const [{ start, end }, setQuery] = useQueryStates(
     {
@@ -28,7 +29,6 @@ export const TrimmerControl = ({
 
   const startPercent = (start / duration) * 100
   const endPercent = (end / duration) * 100
-  const areHandlesClose = end - start < duration * 0.15
 
   const dragControls = useDragControls()
 
@@ -85,20 +85,6 @@ export const TrimmerControl = ({
         className="group absolute -left-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
       >
         <div className="absolute -left-1 h-full w-1 rounded-l-3xl bg-[#e6e6e6]" />
-        <AnimatePresence>
-          {!areHandlesClose && (
-            <motion.span
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
-                startPercent < 10 ? "left-0" : "left-1/2 -translate-x-1/2"
-              }`}
-            >
-              {formatTime(start)}
-            </motion.span>
-          )}
-        </AnimatePresence>
         <div className="pointer-events-none absolute left-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
       </div>
 
@@ -111,33 +97,10 @@ export const TrimmerControl = ({
         className="group absolute -right-1 -top-1 bottom-[-4px] z-20 w-3 cursor-ew-resize touch-none bg-[#e6e6e6]"
       >
         <div className="absolute -right-1 h-full w-1 rounded-r-3xl bg-[#e6e6e6]" />
-        <AnimatePresence>
-          {areHandlesClose ? (
-            <motion.span
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
-                endPercent > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
-              }`}
-            >
-              {formatTime(start)} - {formatTime(end)}
-            </motion.span>
-          ) : (
-            <motion.span
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
-                endPercent > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
-              }`}
-            >
-              {formatTime(end)}
-            </motion.span>
-          )}
-        </AnimatePresence>
         <div className="pointer-events-none absolute right-[2px] top-5 block h-6 w-[2px] rounded-full bg-black/20 transition-all group-active:scale-y-[1.1] group-active:bg-black" />
       </div>
+
+      <div className="absolute z-30 h-full w-full">{children}</div>
     </div>
   )
 }
