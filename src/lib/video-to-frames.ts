@@ -71,6 +71,7 @@ export class VideoToFrames {
             context = canvas.getContext("2d", {
               alpha: false,
               desynchronized: true,
+              willReadFrequently: true,
             })
 
             if (!context) {
