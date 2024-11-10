@@ -8,7 +8,6 @@ import {
   VideoToFramesMethod,
   type Frame,
 } from "~/lib/video-to-frames"
-import { CodecSupportIndicator } from "./codec-support-indicator"
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
@@ -180,8 +179,7 @@ export const VideoEditor = () => {
         filename: videoData?.filename || "",
       }}
     >
-      <CodecSupportIndicator />
-      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center py-8 lg:w-[52rem]">
+      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center lg:w-[52rem]">
         <AnimatePresence mode="wait">
           {videoData ? (
             <VideoPreview key={videoData.filename} src={videoData.src} />

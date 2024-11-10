@@ -32,7 +32,7 @@ export const VideoPreviewHeader = ({
   const isVideoTrimmed = start > 0 || end < duration
 
   return (
-    <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-[#0d0c0b] p-4 backdrop-blur-sm lg:mt-6">
+    <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-[#0d0c0b] p-4 backdrop-blur-sm lg:mt-2">
       <div className="flex items-center gap-2">
         <FileStackIcon />
         <div className="flex flex-col">
@@ -53,7 +53,7 @@ export const VideoPreviewHeader = ({
         )}
         <button
           onClick={goBack}
-          className="rounded-lg bg-white/10 p-2.5 transition-colors hover:bg-white/20"
+          className="rounded-lg bg-white/10 p-2 transition-colors hover:bg-white/20"
           aria-label="Close video"
         >
           <svg

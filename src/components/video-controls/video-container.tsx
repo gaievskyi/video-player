@@ -65,7 +65,7 @@ export const VideoContainer = ({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={clsx(
-        "group relative flex h-full w-full items-center justify-center overflow-hidden rounded-none bg-black sm:rounded-xl",
+        "group relative flex h-full w-full items-center justify-center overflow-hidden rounded-none bg-black sm:rounded-2xl",
         isVertical ? ["sm:aspect-video sm:h-auto"] : ["aspect-video h-auto"],
       )}
     >
@@ -93,7 +93,7 @@ export const VideoContainer = ({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       {/* Mobile header with meta info and close button */}
-      <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-4 sm:hidden">
+      <div className="absolute left-0 right-0 top-0 flex items-start justify-between py-4 px-1 sm:hidden">
         <div className="text-white">
           <h3 className="text-sm font-medium drop-shadow-lg">{name}</h3>
           <div className="flex items-center gap-1.5 text-xs text-white/80 drop-shadow-lg">

@@ -338,7 +338,7 @@ export const VideoPreview = ({
         />
       </div>
 
-      <div className="w-full py-6 sm:py-0 px-8">
+      <div className="w-full py-6 sm:py-0 px-4">
         <TrimmerContainer
           duration={duration}
           seekRef={seekRef}

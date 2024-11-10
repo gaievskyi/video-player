@@ -6,11 +6,9 @@
   .seek {
     @apply h-full w-full cursor-pointer appearance-none bg-transparent will-change-transform focus:outline-none;
     position: relative;
-
   }
 
   .seek::after {
-
     content: attr(current-time);
     position: absolute;
     left: var(--transform-x, 0);
@@ -82,11 +80,11 @@
   }
 
   .touch-target {
-    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+    @apply flex min-h-[44px] min-w-[44px] items-center justify-center;
   }
 
   .mobile-button {
-    @apply active:opacity-60 transition-opacity touch-target;
+    @apply touch-target transition-opacity active:opacity-60;
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -136,19 +134,17 @@ body {
 
   min-height: -webkit-fill-available;
   overscroll-behavior: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 button {
-  @apply rounded-lg bg-opacity-0 hover:bg-opacity-10 active:bg-opacity-20
-         transition-colors duration-200 backdrop-blur-sm;
+  @apply rounded-lg bg-opacity-0 backdrop-blur-sm transition-colors duration-200 hover:bg-opacity-10 active:bg-opacity-20;
   -webkit-tap-highlight-color: transparent;
 }
 
 input {
-  @apply appearance-none rounded-lg bg-white/10
-         focus:outline-none focus:ring-2 focus:ring-white/20
-         transition-all duration-200;
+  @apply appearance-none rounded-lg bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/20;
   -webkit-tap-highlight-color: transparent;
 }
 

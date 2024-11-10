@@ -88,12 +88,12 @@ export const TrimmerContainer = ({
 
   return (
     <motion.div
-      className="container relative mt-8 flex h-16 justify-between rounded-xl border border-[#171717] bg-card sm:mt-10 lg:mt-12"
+      className="container relative mt-8 flex h-12 lg:h-16 justify-between rounded-xl border border-[#171717] bg-card sm:mt-10 lg:mt-28"
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2, duration: 0.5, type: "spring", bounce: 0.3 }}
     >
-      <div className="absolute inset-x-0 -top-8 sm:-top-10 lg:-top-12">
+      <div className="absolute inset-x-0 -top-8 sm:-top-12">
         <TimeRuler duration={duration} />
       </div>
 
