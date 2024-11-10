@@ -41,7 +41,7 @@ export const SeekControl = forwardRef<HTMLInputElement, SeekControlProps>(
             "--end": `${endPercent}%`,
           } as React.CSSProperties
         }
-        className="seek absolute z-30 w-full"
+        className="seek absolute z-10 w-full"
       />
     )
   },
