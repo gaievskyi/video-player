@@ -1,5 +1,3 @@
-import { checkCodecSupport } from "./codec-support"
-
 export class VideoProcessor {
   private startTime: number
   private endTime: number
