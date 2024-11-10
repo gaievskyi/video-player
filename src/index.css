@@ -6,9 +6,11 @@
   .seek {
     @apply h-full w-full cursor-pointer appearance-none bg-transparent will-change-transform focus:outline-none;
     position: relative;
+
   }
 
   .seek::after {
+
     content: attr(current-time);
     position: absolute;
     left: var(--transform-x, 0);

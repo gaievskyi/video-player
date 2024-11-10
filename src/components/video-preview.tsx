@@ -297,7 +297,7 @@ export const VideoPreview = ({
         filter: isVideoReady ? "blur(0px)" : "blur(10px)",
       }}
       transition={{ duration: 0.6, type: "spring", bounce: 0.35 }}
-      className="flex h-[100svh] w-full flex-col px-4 sm:gap-6"
+      className="flex h-[100svh] w-full flex-col sm:gap-4"
     >
       <div className="hidden sm:block">
         <VideoPreviewHeader duration={duration} src={src} />
@@ -332,7 +332,7 @@ export const VideoPreview = ({
         />
       </div>
 
-      <div className="w-full py-6 sm:py-0">
+      <div className="w-full py-6 sm:py-0 px-8">
         <TrimmerContainer
           duration={duration}
           seekRef={seekRef}
