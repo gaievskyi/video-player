@@ -66,19 +66,29 @@ export const VideoContainer = ({
       onMouseLeave={() => setIsHovering(false)}
       className={clsx(
         "group relative flex h-full w-full items-center justify-center overflow-hidden rounded-none bg-black sm:rounded-2xl",
-        isVertical ? ["sm:aspect-video sm:h-auto"] : ["aspect-video h-auto"],
+        isVertical
+          ? [
+              "h-[calc(100vh-8rem)] pb-8 sm:pb-0",
+              "sm:aspect-video sm:h-auto"
+            ]
+          : "h-screen sm:aspect-video sm:h-auto"
       )}
     >
       <video
         ref={videoRef}
         className={clsx(
-          "h-full w-full",
+          "max-h-full transition-all duration-300",
           isVertical
             ? [
-                "object-contain",
-                fitMode ? "sm:object-contain" : "sm:object-cover",
+                "h-full w-auto max-w-full",
+                fitMode
+                  ? "sm:h-full sm:w-auto sm:object-contain"
+                  : "sm:h-full sm:w-full sm:object-cover"
               ]
-            : "object-contain",
+            : [
+                "object-contain",
+                "h-auto max-h-[100vh] w-full sm:h-full",
+              ]
         )}
         muted={isMuted}
         playsInline
@@ -133,7 +143,7 @@ export const VideoContainer = ({
         className="pointer-events-none absolute inset-0 bg-black/20 sm:pointer-events-auto"
       />
 
-      {/* Fit/Fill toggle for vertical videos on desktop */}
+      {/* Updated Fit/Fill toggle for vertical videos */}
       {isVertical && (
         <motion.button
           initial={{ opacity: 0 }}
@@ -158,11 +168,9 @@ export const VideoContainer = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M9 3v18" />
-                <path d="M15 3v18" />
+                <path d="M7 4v16M17 4v16M3 8h18M3 16h18" />
               </svg>
-              Fit
+              Original
             </>
           ) : (
             <>
@@ -177,8 +185,9 @@ export const VideoContainer = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M3 12h18" />
+                <path d="M3 8c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <path d="M8 4v16" />
+                <path d="M16 4v16" />
               </svg>
               Fill
             </>
