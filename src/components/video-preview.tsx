@@ -242,8 +242,14 @@ export const VideoPreview = ({
 
       if (video.currentTime >= end) {
         video.currentTime = start
+        if (isPlaying) {
+          video.play().catch(console.error)
+        }
       } else if (video.currentTime < start) {
         video.currentTime = start
+        if (isPlaying) {
+          video.play().catch(console.error)
+        }
       }
     },
     videoRef,
