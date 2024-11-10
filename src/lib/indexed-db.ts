@@ -1,3 +1,5 @@
+import type { Frame } from "~/lib/video-to-frames"
+
 const DB_NAME = "video-editor"
 const DB_VERSION = 4
 const STORE_NAME = "uploaded-videos"
@@ -9,6 +11,7 @@ export type UploadedVideo = {
   videoBlob: Blob
   lastModified: number
   createdAt: string
+  frames?: Frame[]
 }
 
 export class IndexedDBService {

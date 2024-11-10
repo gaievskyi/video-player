@@ -1,25 +1,33 @@
+import { useQueryStates } from "nuqs"
+import { useRouter } from "~/lib/router"
+import { parseAsTime } from "~/lib/time-query-parser"
 import { SaveButton } from "./video-controls/save-button"
 import { useVideoEditorContext } from "./video-editor-context"
-import { useRouter } from "~/lib/router"
 
 interface VideoPreviewHeaderProps {
   duration: number
-  start: number
-  end: number
   src: string
 }
 
 export const VideoPreviewHeader = ({
   duration,
-  start,
-  end,
   src,
 }: VideoPreviewHeaderProps) => {
   const { filename } = useVideoEditorContext()
   const { goBack } = useRouter()
   const [name, extension] = filename.split(".")
 
-  const isVideoTrimmed = start > 0 || end < 100
+  const [{ start, end }] = useQueryStates(
+    {
+      start: parseAsTime.withDefault(0),
+      end: parseAsTime.withDefault(duration),
+    },
+    {
+      clearOnDefault: true,
+    },
+  )
+
+  const isVideoTrimmed = start > 0 || end < duration
 
   return (
     <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-black/20 px-6 py-4 backdrop-blur-sm">
@@ -56,11 +64,7 @@ export const VideoPreviewHeader = ({
 
       <div className="flex items-center gap-3">
         {isVideoTrimmed && (
-          <SaveButton
-            videoSrc={src}
-            startTime={(duration * start) / 100}
-            endTime={(duration * end) / 100}
-          />
+          <SaveButton videoSrc={src} startTime={start} endTime={end} />
         )}
         <button
           onClick={goBack}

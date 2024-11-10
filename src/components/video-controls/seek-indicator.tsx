@@ -5,7 +5,10 @@ type SeekIndicatorProps = {
   seekIncrement: number
 }
 
-export const SeekIndicator = ({ direction, seekIncrement }: SeekIndicatorProps) => {
+export const SeekIndicator = ({
+  direction,
+  seekIncrement,
+}: SeekIndicatorProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}

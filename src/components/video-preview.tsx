@@ -1,4 +1,5 @@
 import { motion } from "framer-motion"
+import { useQueryStates } from "nuqs"
 import {
   useEffect,
   useRef,
@@ -11,6 +12,7 @@ import {
 import { useDebounced } from "~/hooks/use-debounced"
 import { useEventListener } from "~/hooks/use-event-listener"
 import { useToggle } from "~/hooks/use-toggle"
+import { parseAsTime } from "~/lib/time-query-parser"
 import { formatTime } from "~/lib/utils"
 import { TrimmerContainer } from "./video-controls/trimmer-container"
 import { VideoContainer } from "./video-controls/video-container"
@@ -26,8 +28,15 @@ export const VideoPreview = ({
   const videoRef = useRef<HTMLVideoElement>(null)
   const seekRef = useRef<HTMLInputElement>(null)
 
-  const [start, setStart] = useState(0)
-  const [end, setEnd] = useState(100)
+  const [{ start, end }, setVideoState] = useQueryStates(
+    {
+      start: parseAsTime.withDefault(0),
+      end: parseAsTime.withDefault(0),
+    },
+    {
+      clearOnDefault: true,
+    },
+  )
 
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(true)
 
@@ -44,14 +53,21 @@ export const VideoPreview = ({
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(true)
 
+  const [isVideoReady, setIsVideoReady] = useState(false)
+
   const onLoadedMetadata = () => {
     if (!videoRef.current || !Number.isFinite(videoRef.current.duration)) return
     setDuration(videoRef.current.duration)
+    setIsVideoReady(true)
+
+    // Only set end time if it's not already set
+    if (end === 0) {
+      setVideoState({ end: videoRef.current.duration })
+    }
 
     // Ensure initial position is valid
-    const videoStart = (videoRef.current.duration * start) / 100
-    if (Number.isFinite(videoStart)) {
-      videoRef.current.currentTime = videoStart
+    if (Number.isFinite(start)) {
+      videoRef.current.currentTime = start
     }
   }
 
@@ -75,12 +91,12 @@ export const VideoPreview = ({
     const video = videoRef.current
 
     const updateSeek = () => {
-      const value = (100 / video.duration) * video.currentTime
+      const percentValue = (100 / video.duration) * video.currentTime
 
-      if (value >= start && value <= end) {
-        seek.value = value.toFixed(2)
+      if (video.currentTime >= start && video.currentTime <= end) {
+        seek.value = percentValue.toFixed(2)
         seek.setAttribute("current-time", formatTime(video.currentTime))
-        const thumbPosition = (seek.clientWidth * value) / 100
+        const thumbPosition = (seek.clientWidth * percentValue) / 100
         seek.style.setProperty("--transform-x", `${thumbPosition}px`)
       }
     }
@@ -105,15 +121,17 @@ export const VideoPreview = ({
     const seek = seekRef.current
     const video = videoRef.current
 
-    const seekValue = Number(seek.value)
-    if (seekValue < start) {
-      seek.value = start.toString()
-      video.currentTime = (video.duration * start) / 100
-    } else if (seekValue > end) {
-      seek.value = end.toString()
-      video.currentTime = (video.duration * end) / 100
+    const percentValue = Number(seek.value)
+    const timeValue = (video.duration * percentValue) / 100
+
+    if (timeValue < start) {
+      video.currentTime = start
+      seek.value = ((start / video.duration) * 100).toString()
+    } else if (timeValue > end) {
+      video.currentTime = end
+      seek.value = ((end / video.duration) * 100).toString()
     } else {
-      video.currentTime = video.duration * (seekValue / 100)
+      video.currentTime = timeValue
     }
   }
 
@@ -139,9 +157,10 @@ export const VideoPreview = ({
   ): void => {
     if (!videoRef.current) return
     e.preventDefault()
-    const trimmer = videoRef.current
+    const video = videoRef.current
     const startX = "touches" in e ? e.touches[0].clientX : e.clientX
-    const initialLeft = isEnd ? end : start
+    const initialTime = isEnd ? end : start
+    const initialPercent = (initialTime / video.duration) * 100
 
     const onDrag = (moveEvent: MouseEvent | TouchEvent) => {
       if (!videoRef.current) return
@@ -150,15 +169,17 @@ export const VideoPreview = ({
           ? moveEvent.touches[0].clientX
           : moveEvent.clientX
       const delta = currentX - startX
-      const newPos = initialLeft + (delta / trimmer.clientWidth) * 100
+      const deltaPercent = (delta / video.clientWidth) * 100
+      const newPercent = initialPercent + deltaPercent
+      const newTime = (newPercent * video.duration) / 100
 
       if (isEnd) {
-        if (newPos <= 100 && newPos >= start + 5) {
-          setEnd(newPos)
+        if (newPercent <= 100 && newTime >= start + 1) {
+          setVideoState({ end: newTime })
         }
       } else {
-        if (newPos >= 0 && newPos <= end - 5) {
-          setStart(newPos)
+        if (newPercent >= 0 && newTime <= end - 1) {
+          setVideoState({ start: newTime })
         }
       }
     }
@@ -213,23 +234,13 @@ export const VideoPreview = ({
   useEventListener(
     "timeupdate",
     () => {
-      if (!videoRef.current || !videoRef.current.duration) return
+      if (!videoRef.current) return
       const video = videoRef.current
-      const videoStart = (video.duration * start) / 100
-      const videoEnd = (video.duration * end) / 100
 
-      if (
-        !Number.isFinite(videoStart) ||
-        !Number.isFinite(videoEnd) ||
-        !Number.isFinite(video.duration)
-      ) {
-        return
-      }
-
-      if (video.currentTime >= videoEnd) {
-        video.currentTime = videoStart
-      } else if (video.currentTime < videoStart) {
-        video.currentTime = videoStart
+      if (video.currentTime >= end) {
+        video.currentTime = start
+      } else if (video.currentTime < start) {
+        video.currentTime = start
       }
     },
     videoRef,
@@ -239,23 +250,11 @@ export const VideoPreview = ({
   )
 
   useEffect(() => {
-    if (!videoRef.current || !videoRef.current.duration) return
+    if (!videoRef.current) return
     const video = videoRef.current
-    const videoStart = (video.duration * start) / 100
 
-    if (
-      !Number.isFinite(videoStart) ||
-      !Number.isFinite(video.duration) ||
-      !Number.isFinite(end)
-    ) {
-      return
-    }
-
-    if (
-      video.currentTime < videoStart ||
-      video.currentTime > (video.duration * end) / 100
-    ) {
-      video.currentTime = videoStart
+    if (video.currentTime < start || video.currentTime > end) {
+      video.currentTime = start
     }
   }, [start, end])
 
@@ -289,16 +288,15 @@ export const VideoPreview = ({
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      animate={{
+        opacity: isVideoReady ? 1 : 0,
+        y: isVideoReady ? 0 : 30,
+        filter: isVideoReady ? "blur(0px)" : "blur(10px)",
+      }}
       transition={{ duration: 0.6, type: "spring", bounce: 0.35 }}
       className="flex max-h-[100svh] w-full flex-col gap-6 px-4"
     >
-      <VideoPreviewHeader
-        duration={duration}
-        start={start}
-        end={end}
-        src={src}
-      />
+      <VideoPreviewHeader duration={duration} src={src} />
 
       <VideoContainer
         videoRef={videoRef}
@@ -318,8 +316,6 @@ export const VideoPreview = ({
       />
 
       <TrimmerContainer
-        start={start}
-        end={end}
         duration={duration}
         seekRef={seekRef}
         onTrimStart={(e) => onTrim(e, false)}

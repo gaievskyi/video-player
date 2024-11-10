@@ -1,10 +1,17 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react"
 
 type RouterContextType = {
   navigate: (path: string) => void
   goBack: () => void
   params: Record<string, string>
   path: string
+  isReady: boolean
 }
 
 const RouterContext = createContext<RouterContextType>({
@@ -12,6 +19,7 @@ const RouterContext = createContext<RouterContextType>({
   goBack: () => {},
   params: {},
   path: "",
+  isReady: false,
 })
 
 export const useRouter = () => useContext(RouterContext)
@@ -78,8 +86,12 @@ const matchRoute = (routePath: string, currentPath: string) => {
   return params
 }
 
-export const Router = ({ routes, notFound = <NotFoundPage /> }: RouterProps) => {
+export const Router = ({
+  routes,
+  notFound = <NotFoundPage />,
+}: RouterProps) => {
   const [path, setPath] = useState(window.location.pathname)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
     const handlePopState = () => {
@@ -87,6 +99,8 @@ export const Router = ({ routes, notFound = <NotFoundPage /> }: RouterProps) => 
     }
 
     window.addEventListener("popstate", handlePopState)
+    setIsReady(true)
+
     return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
@@ -103,7 +117,9 @@ export const Router = ({ routes, notFound = <NotFoundPage /> }: RouterProps) => 
     const params = matchRoute(route.path, path)
     if (params !== null) {
       return (
-        <RouterContext.Provider value={{ navigate, goBack, params, path }}>
+        <RouterContext.Provider
+          value={{ navigate, goBack, params, path, isReady }}
+        >
           {route.element}
         </RouterContext.Provider>
       )
@@ -111,7 +127,9 @@ export const Router = ({ routes, notFound = <NotFoundPage /> }: RouterProps) => 
   }
 
   return (
-    <RouterContext.Provider value={{ navigate, goBack, params: {}, path }}>
+    <RouterContext.Provider
+      value={{ navigate, goBack, params: {}, path, isReady }}
+    >
       {notFound}
     </RouterContext.Provider>
   )

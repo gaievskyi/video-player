@@ -3,49 +3,123 @@ export enum VideoToFramesMethod {
   totalFrames,
 }
 
-export type Frame = { id: string; src: string }
+export type Frame = {
+  id: string
+  src: string
+}
 
 export class VideoToFrames {
+  private static readonly CHUNK_SIZE = 5 // Process frames in smaller chunks
+  private static readonly MAX_DIMENSION = 1280 // Max dimension for frame extraction
+  private static readonly QUALITY = 0.75 // Slightly reduce quality for better memory usage
+
   public static async getFrames(
     videoUrl: string,
     amount: number,
     type: VideoToFramesMethod = VideoToFramesMethod.fps,
   ): Promise<Frame[]> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const frames: Frame[] = []
-      const canvas = new OffscreenCanvas(0, 0)
-      const context = canvas.getContext("2d")!
-      let duration = 0
+      let canvas: OffscreenCanvas | null = null
+      let context: OffscreenCanvasRenderingContext2D | null = null
+      let video: HTMLVideoElement | null = null
 
-      const video = document.createElement("video")
-      video.preload = "auto"
-
-      video.addEventListener("loadeddata", async () => {
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        duration = video.duration
-
-        // Optimize frame count for better visual quality
-        const desiredFrameCount = 24 // iOS-like frame density
-        const totalFrames = type === VideoToFramesMethod.fps
-          ? Math.min(duration * amount, desiredFrameCount)
-          : Math.min(amount, desiredFrameCount)
-
-        const timeStep = duration / totalFrames
-
-        // Generate frames with consistent spacing
-        for (let i = 0; i < totalFrames; i++) {
-          const time = i * timeStep
-          const id = time.toFixed(2)
-          const src = await this.getVideoFrame(video, context, canvas, time)
-          frames.push({ id, src })
+      const cleanup = () => {
+        if (video) {
+          video.removeAttribute("src")
+          video.load()
+          video = null
         }
+        if (canvas) {
+          canvas = null
+        }
+        if (context) {
+          context = null
+        }
+      }
 
-        resolve(frames)
-      })
+      try {
+        video = document.createElement("video")
+        video.preload = "auto"
+        video.playsInline = true
+        video.muted = true
 
-      video.src = videoUrl
-      video.load()
+        video.addEventListener("loadeddata", async () => {
+          try {
+            // Calculate scaled dimensions
+            const scale = Math.min(
+              1,
+              this.MAX_DIMENSION /
+                Math.max(video!.videoWidth, video!.videoHeight),
+            )
+            const width = Math.floor(video!.videoWidth * scale)
+            const height = Math.floor(video!.videoHeight * scale)
+
+            canvas = new OffscreenCanvas(width, height)
+            context = canvas.getContext("2d", {
+              alpha: false,
+              desynchronized: true,
+            })
+
+            if (!context) {
+              throw new Error("Failed to get canvas context")
+            }
+
+            const duration = video!.duration
+            const desiredFrameCount = Math.min(24, amount) // Limit max frames
+            const totalFrames =
+              type === VideoToFramesMethod.fps
+                ? Math.min(duration * amount, desiredFrameCount)
+                : Math.min(amount, desiredFrameCount)
+
+            const timeStep = duration / totalFrames
+
+            // Process frames in chunks
+            for (let i = 0; i < totalFrames; i += this.CHUNK_SIZE) {
+              const chunkSize = Math.min(this.CHUNK_SIZE, totalFrames - i)
+              const chunkPromises = []
+
+              for (let j = 0; j < chunkSize; j++) {
+                const frameIndex = i + j
+                const time = frameIndex * timeStep
+                chunkPromises.push(
+                  this.getVideoFrame(
+                    video!,
+                    context,
+                    canvas,
+                    time,
+                    width,
+                    height,
+                  ),
+                )
+              }
+
+              const chunkFrames = await Promise.all(chunkPromises)
+              frames.push(...chunkFrames)
+
+              // Force garbage collection between chunks
+              await new Promise((resolve) => setTimeout(resolve, 0))
+            }
+
+            cleanup()
+            resolve(frames)
+          } catch (error) {
+            cleanup()
+            reject(error)
+          }
+        })
+
+        video.addEventListener("error", (e) => {
+          cleanup()
+          reject(new Error(`Video loading failed: ${e.message}`))
+        })
+
+        video.src = videoUrl
+        video.load()
+      } catch (error) {
+        cleanup()
+        reject(error)
+      }
     })
   }
 
@@ -54,39 +128,64 @@ export class VideoToFrames {
     context: OffscreenCanvasRenderingContext2D,
     canvas: OffscreenCanvas,
     time: number,
-  ): Promise<string> {
+    width: number,
+    height: number,
+  ): Promise<Frame> {
     return new Promise((resolve, reject) => {
-      const onSeeked = () => {
-        video.removeEventListener("seeked", onSeeked)
-        this.storeFrame(video, context, canvas, resolve, reject)
+      const onSeeked = async () => {
+        try {
+          video.removeEventListener("seeked", onSeeked)
+          const frame = await this.storeFrame(
+            video,
+            context,
+            canvas,
+            width,
+            height,
+          )
+          resolve({
+            id: time.toFixed(2),
+            src: frame,
+          })
+        } catch (error) {
+          reject(error)
+        }
       }
+
       video.addEventListener("seeked", onSeeked)
       video.currentTime = time
     })
   }
 
-  private static storeFrame(
+  private static async storeFrame(
     video: HTMLVideoElement,
     context: OffscreenCanvasRenderingContext2D,
     canvas: OffscreenCanvas,
-    resolve: (frame: string) => void,
-    reject: (error: string) => void,
-  ) {
-    // Ensure high-quality frame extraction
-    context.imageSmoothingEnabled = true
-    context.imageSmoothingQuality = 'high'
+    width: number,
+    height: number,
+  ): Promise<string> {
+    // Clear previous frame
+    context.clearRect(0, 0, width, height)
 
-    context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
-    canvas.convertToBlob({
-      type: 'image/jpeg',
-      quality: 0.85  // Balance between quality and performance
-    }).then(
-      (blob) => {
+    // Draw with smoothing for better quality
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = "medium"
+
+    context.drawImage(video, 0, 0, width, height)
+
+    try {
+      const blob = await canvas.convertToBlob({
+        type: "image/jpeg",
+        quality: this.QUALITY,
+      })
+
+      return new Promise((resolve, reject) => {
         const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result?.toString() ?? "")
+        reader.onloadend = () => resolve(reader.result?.toString() || "")
+        reader.onerror = () => reject(reader.error)
         reader.readAsDataURL(blob)
-      },
-      (error) => reject(error.message),
-    )
+      })
+    } catch (error) {
+      throw new Error(`Failed to convert frame to blob: ${error}`)
+    }
   }
 }

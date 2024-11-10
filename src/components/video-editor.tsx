@@ -1,6 +1,7 @@
 import { AnimatePresence } from "framer-motion"
 import { useEffect, useState, type ChangeEventHandler } from "react"
 import { Spinner } from "~/components/spinner"
+import { cacheService } from "~/lib/cache-service"
 import { useRouter } from "~/lib/router"
 import { videoService } from "~/lib/video-service"
 import {
@@ -39,108 +40,117 @@ export const VideoEditor = () => {
   const { navigate, params } = useRouter()
   const videoId = params.id
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
-  const [videoData, setVideoData] = useState<VideoData | null>(null)
-
-  // Preload example video frames
-  useEffect(() => {
-    const preloadExampleFrames = async () => {
-      for (const video of Object.values(EXAMPLE_VIDEOS)) {
-        if (video.frames.length === 0) {
-          const frames = await VideoToFrames.getFrames(
-            video.src,
-            21,
-            VideoToFramesMethod.totalFrames,
-          )
-          video.frames = frames
+  const [videoData, setVideoData] = useState<VideoData | null>(() => {
+    // Initialize with cached data if available
+    if (videoId) {
+      const decodedVideoId = decodeURIComponent(videoId)
+      const cached = cacheService.get(decodedVideoId)
+      if (cached?.video.src && cached.frames.length > 0) {
+        return {
+          src: cached.video.src,
+          filename: cached.video.filename || decodedVideoId,
+          frames: cached.frames,
         }
       }
     }
-
-    preloadExampleFrames()
-  }, [])
+    return null
+  })
 
   // Load video data on mount or when videoId changes
   useEffect(() => {
+    let isMounted = true
+
     const loadVideo = async () => {
       if (!videoId) {
         setVideoData(null)
         return
       }
 
+      const decodedVideoId = decodeURIComponent(videoId)
+
       // Check if it's an example video first
       const exampleVideo = Object.values(EXAMPLE_VIDEOS).find(
-        (v) => v.id === videoId,
+        (v) => v.id === decodedVideoId,
       )
       if (exampleVideo) {
-        // If frames are already loaded, use them immediately
         if (exampleVideo.frames.length > 0) {
-          setVideoData({
-            src: exampleVideo.src,
-            filename: exampleVideo.filename,
-            frames: exampleVideo.frames,
-          })
+          if (isMounted) {
+            setVideoData({
+              src: exampleVideo.src,
+              filename: exampleVideo.filename,
+              frames: exampleVideo.frames,
+            })
+          }
           return
         }
-        // If not, load them quickly
         const frames = await VideoToFrames.getFrames(
           exampleVideo.src,
           21,
           VideoToFramesMethod.totalFrames,
         )
         exampleVideo.frames = frames
-        setVideoData({
-          src: exampleVideo.src,
-          filename: exampleVideo.filename,
-          frames,
-        })
+        if (isMounted) {
+          setVideoData({
+            src: exampleVideo.src,
+            filename: exampleVideo.filename,
+            frames,
+          })
+        }
         return
       }
 
       // Check cache first
-      const cachedFrames = videoService.getFrames(videoId)
-      const cachedVideo = await videoService.getVideo(videoId)
-
-      if (cachedFrames && cachedVideo) {
-        setVideoData({
-          src: cachedVideo.src,
-          filename: cachedVideo.filename,
-          frames: cachedFrames,
-        })
+      const cached = cacheService.get(decodedVideoId)
+      if (cached?.video.src && cached.frames.length > 0) {
+        if (isMounted) {
+          setVideoData({
+            src: cached.video.src,
+            filename: cached.video.filename || decodedVideoId,
+            frames: cached.frames,
+          })
+        }
         return
       }
 
-      // If not in cache, show loading state
-      setIsLoadingVideo(true)
+      // Only show loading state if we need to fetch
+      if (isMounted) {
+        setIsLoadingVideo(true)
+      }
 
       try {
-        const video = await videoService.getVideo(videoId)
-        if (video) {
-          const frames = await VideoToFrames.getFrames(
-            video.src,
-            21,
-            VideoToFramesMethod.totalFrames,
-          )
+        const video = await videoService.getVideo(decodedVideoId)
+        if (video && isMounted) {
           setVideoData({
             src: video.src,
             filename: video.filename,
-            frames,
+            frames: video.frames,
           })
-        } else {
+        } else if (!video && isMounted) {
           console.error("Video not found")
           navigate("/")
         }
       } catch (error) {
         console.error("Failed to load video:", error)
-        navigate("/")
+        if (isMounted) {
+          navigate("/")
+        }
       } finally {
-        setIsLoadingVideo(false)
+        if (isMounted) {
+          setIsLoadingVideo(false)
+        }
       }
     }
 
     loadVideo()
+
+    return () => {
+      isMounted = false
+    }
   }, [videoId, navigate])
 
-  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
+  const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (
+    event,
+  ) => {
     const file = event.target.files?.item(0)
     if (!(file instanceof File)) return
 
@@ -164,8 +174,15 @@ export const VideoEditor = () => {
   }
 
   const handleExampleClick = (filename: string) => {
-    navigate(`/videos/${filename}`)
+    navigate(`/videos/${encodeURIComponent(filename)}`)
   }
+
+  // Reset video data when unmounting
+  useEffect(() => {
+    return () => {
+      setVideoData(null)
+    }
+  }, [])
 
   return (
     <VideoEditorContextProvider
@@ -179,7 +196,7 @@ export const VideoEditor = () => {
       <div className="container relative m-auto flex h-[100svh] w-[52rem] flex-col items-center justify-center py-8">
         <AnimatePresence mode="wait">
           {videoData ? (
-            <VideoPreview key="preview" src={videoData.src} />
+            <VideoPreview key={videoData.filename} src={videoData.src} />
           ) : isLoadingVideo ? (
             <Spinner key="spinner" />
           ) : (

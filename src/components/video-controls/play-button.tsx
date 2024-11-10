@@ -1,9 +1,8 @@
 import { motion } from "framer-motion"
-import type { ComponentProps } from 'react'
+import type { ComponentProps } from "react"
 import { PlayIcon } from "../icons"
 
 type PlayButtonProps = ComponentProps<"button">
-
 
 export const PlayButton = ({ onClick }: PlayButtonProps) => {
   return (

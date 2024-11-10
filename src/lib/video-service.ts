@@ -1,5 +1,10 @@
+import { cacheService } from "./cache-service"
 import { dbService, type UploadedVideo } from "./indexed-db"
-import { VideoToFrames, VideoToFramesMethod, type Frame } from "./video-to-frames"
+import {
+  VideoToFrames,
+  VideoToFramesMethod,
+  type Frame,
+} from "./video-to-frames"
 
 type CachedVideo = {
   url: string
@@ -15,44 +20,7 @@ type PreloadStatus = {
 export class VideoService {
   private videoCache: Map<string, CachedVideo> = new Map()
   private preloadCache: Map<string, PreloadStatus> = new Map()
-  private readonly MAX_CACHE_SIZE = 10 // Maximum number of videos to cache
   private readonly PRELOAD_CACHE_TIMEOUT = 30000 // 30 seconds
-
-  private addToCache(filename: string, url: string, frames: Frame[]) {
-    // If cache is full, remove least recently used item
-    if (this.videoCache.size >= this.MAX_CACHE_SIZE) {
-      let oldestTime = Date.now()
-      let oldestKey = ''
-
-      this.videoCache.forEach((cache, key) => {
-        if (cache.lastAccessed < oldestTime) {
-          oldestTime = cache.lastAccessed
-          oldestKey = key
-        }
-      })
-
-      if (oldestKey) {
-        const oldCache = this.videoCache.get(oldestKey)
-        if (oldCache) {
-          URL.revokeObjectURL(oldCache.url)
-        }
-        this.videoCache.delete(oldestKey)
-      }
-    }
-
-    this.videoCache.set(filename, {
-      url,
-      frames,
-      lastAccessed: Date.now()
-    })
-  }
-
-  private updateCacheAccess(filename: string) {
-    const cache = this.videoCache.get(filename)
-    if (cache) {
-      cache.lastAccessed = Date.now()
-    }
-  }
 
   async uploadVideo(file: File): Promise<{
     filename: string
@@ -79,7 +47,9 @@ export class VideoService {
       }
 
       await dbService.saveVideo(video)
-      this.addToCache(filename, url, frames)
+
+      // Cache the uploaded video
+      cacheService.set(filename, video, frames)
 
       return {
         filename,
@@ -87,7 +57,7 @@ export class VideoService {
         frames,
       }
     } catch (error) {
-      console.error('Error uploading video:', error)
+      console.error("Error uploading video:", error)
       throw error
     }
   }
@@ -96,46 +66,52 @@ export class VideoService {
     try {
       const videos = await dbService.getAllVideos()
 
-      return videos.map(video => {
+      return videos.map((video) => {
         const cached = this.videoCache.get(video.filename)
         if (cached) {
-          this.updateCacheAccess(video.filename)
           return {
             ...video,
-            src: cached.url
+            src: cached.url,
           }
         }
 
         const url = URL.createObjectURL(video.videoBlob)
         return {
           ...video,
-          src: url
+          src: url,
         }
       })
     } catch (error) {
-      console.error('Error getting all videos:', error)
+      console.error("Error getting all videos:", error)
       throw error
     }
   }
 
-  async getVideo(filename: string): Promise<UploadedVideo | null> {
+  async getVideo(
+    filename: string,
+  ): Promise<UploadedVideo & { frames: Frame[] }> {
     try {
-      // Check cache first
-      const cached = this.videoCache.get(filename)
-      if (cached) {
-        this.updateCacheAccess(filename)
-        const video = await dbService.getVideo(filename)
-        if (!video) return null
-
+      // Check fast cache first
+      const cached = cacheService.get(filename)
+      if (cached?.video.src && cached.frames.length > 0) {
+        // Return cached data with valid URL
+        const url = this.ensureValidURL(cached.video.src)
         return {
-          ...video,
-          src: cached.url
+          id: cached.video.id || "",
+          src: url,
+          filename: cached.video.filename || filename,
+          videoBlob: new Blob(),
+          lastModified: Date.now(),
+          createdAt: new Date().toISOString(),
+          frames: cached.frames,
         }
       }
 
-      // If not in cache, load from IndexedDB
+      // Only proceed to IndexedDB if no cache exists
       const video = await dbService.getVideo(filename)
-      if (!video) return null
+      if (!video) {
+        throw new Error("Video not found")
+      }
 
       const url = URL.createObjectURL(video.videoBlob)
       const frames = await VideoToFrames.getFrames(
@@ -144,14 +120,18 @@ export class VideoService {
         VideoToFramesMethod.totalFrames,
       )
 
-      this.addToCache(filename, url, frames)
-
-      return {
+      const videoData = {
         ...video,
-        src: url
+        src: url,
+        frames,
       }
+
+      // Cache the result
+      cacheService.set(filename, videoData, frames)
+
+      return videoData
     } catch (error) {
-      console.error('Error getting video:', error)
+      console.error("Error getting video:", error)
       throw error
     }
   }
@@ -165,36 +145,35 @@ export class VideoService {
         this.videoCache.delete(filename)
       }
     } catch (error) {
-      console.error('Error deleting video:', error)
+      console.error("Error deleting video:", error)
       throw error
     }
   }
 
   getFrames(filename: string): Frame[] | undefined {
-    const cached = this.videoCache.get(filename)
-    if (cached) {
-      this.updateCacheAccess(filename)
-      return cached.frames
-    }
-    return undefined
+    const cached = cacheService.get(filename)
+    return cached?.frames
   }
 
   cleanup(): void {
-    this.videoCache.forEach((cache) => {
-      URL.revokeObjectURL(cache.url)
+    // Only clear memory cache
+    this.videoCache.forEach((cached) => {
+      if (cached.url.startsWith("blob:")) {
+        URL.revokeObjectURL(cached.url)
+      }
     })
     this.videoCache.clear()
   }
 
-  async preloadVideo(filename: string): Promise<void> {
+  async preloadVideo(filename: string): Promise<UploadedVideo | null> {
     // Don't preload if already in cache
-    if (this.videoCache.has(filename)) return
+    if (this.videoCache.has(filename)) return null
 
     // Check if there's an ongoing preload
     const existing = this.preloadCache.get(filename)
     if (existing) {
       if (Date.now() - existing.timestamp < this.PRELOAD_CACHE_TIMEOUT) {
-        return // Use existing preload if it's recent
+        return existing.promise // Use existing preload if it's recent
       }
       // Otherwise, let it continue and start a new preload
     }
@@ -202,7 +181,7 @@ export class VideoService {
     const preloadPromise = this.getVideo(filename)
     this.preloadCache.set(filename, {
       promise: preloadPromise,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
 
     try {
@@ -215,12 +194,38 @@ export class VideoService {
         }
       }
     }
+
+    return preloadPromise
+  }
+
+  private ensureValidURL(url: string): string {
+    try {
+      // Check if URL is still valid
+      const urlObject = new URL(url)
+      if (urlObject.protocol === "blob:") {
+        try {
+          // Try to fetch the blob URL
+          fetch(url)
+          return url
+        } catch {
+          // If blob URL is invalid, create a new one from cache
+          const cached = this.videoCache.get(url)
+          if (cached) {
+            return URL.createObjectURL(new Blob([cached.url]))
+          }
+        }
+      }
+      return url
+    } catch {
+      // If URL is invalid, return original (might be a relative path)
+      return url
+    }
   }
 }
 
 export const videoService = new VideoService()
 
-// Clean up URLs when the window unloads
-window.addEventListener('unload', () => {
+// Clean up only memory resources when the window unloads
+window.addEventListener("unload", () => {
   videoService.cleanup()
 })

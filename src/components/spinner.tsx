@@ -14,7 +14,7 @@ export function Spinner({
       <div
         key={index}
         className={cn(
-          "animate-fade absolute h-[16%] w-[4%] rounded-full bg-black opacity-0 dark:bg-white",
+          "absolute h-[16%] w-[4%] animate-fade rounded-full bg-black opacity-0 dark:bg-white",
           particleClassName,
         )}
         style={{

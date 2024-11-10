@@ -1,9 +1,9 @@
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, useDragControls } from "framer-motion"
+import { useQueryStates } from "nuqs"
+import { parseAsTime } from "~/lib/time-query-parser"
 import { formatTime } from "~/lib/utils"
 
 type TrimmerControlProps = {
-  start: number
-  end: number
   duration: number
   onTrimStart: (e: React.MouseEvent | React.TouchEvent) => void
   onTrimEnd: (e: React.MouseEvent | React.TouchEvent) => void
@@ -11,24 +11,74 @@ type TrimmerControlProps = {
 }
 
 export const TrimmerControl = ({
-  start,
-  end,
   duration,
   onTrimStart,
   onTrimEnd,
   onTrimComplete,
 }: TrimmerControlProps) => {
-  const areHandlesClose = end - start < 15
+  const [{ start, end }, setQuery] = useQueryStates(
+    {
+      start: parseAsTime.withDefault(0),
+      end: parseAsTime.withDefault(duration),
+    },
+    {
+      clearOnDefault: true,
+    },
+  )
+
+  const startPercent = (start / duration) * 100
+  const endPercent = (end / duration) * 100
+  const areHandlesClose = end - start < duration * 0.15
+
+  const dragControls = useDragControls()
+
+  const handleDrag = (_: unknown, info: { delta: { x: number } }) => {
+    const containerWidth =
+      document.getElementById("trimmer")?.parentElement?.clientWidth || 0
+    const deltaPercent = (info.delta.x / containerWidth) * 100
+    const deltaTime = (deltaPercent / 100) * duration
+
+    const newStart = Math.max(0, start + deltaTime)
+    const newEnd = Math.min(duration, end + deltaTime)
+
+    if (newStart >= 0 && newEnd <= duration) {
+      setQuery({ start: newStart, end: newEnd })
+    }
+  }
 
   return (
     <div
       id="trimmer"
-      className="absolute inset-y-0 cursor-grab outline outline-4 outline-[#e6e6e6]"
-      style={{ left: `${start}%`, width: `${end - start}%` }}
+      className="absolute inset-y-0 outline outline-4 outline-[#e6e6e6]"
+      style={{
+        left: `${startPercent}%`,
+        width: `${endPercent - startPercent}%`,
+      }}
     >
+      {/* Draggable overlay for top and bottom edges */}
+      <motion.div
+        drag="x"
+        dragControls={dragControls}
+        dragMomentum={false}
+        dragElastic={0}
+        onDrag={handleDrag}
+        dragConstraints={{ left: 0, right: 0 }}
+        className="pointer-events-none absolute inset-0 z-10"
+      >
+        <div
+          className="pointer-events-auto absolute inset-x-0 -top-1 h-2 cursor-grab active:cursor-grabbing"
+          onPointerDown={(e) => dragControls.start(e)}
+        />
+        <div
+          className="pointer-events-auto absolute inset-x-0 -bottom-1 h-2 cursor-grab active:cursor-grabbing"
+          onPointerDown={(e) => dragControls.start(e)}
+        />
+      </motion.div>
+
+      {/* Trim handles */}
       <div
-        onMouseDown={(e) => onTrimStart(e)}
-        onTouchStart={(e) => onTrimStart(e)}
+        onMouseDown={onTrimStart}
+        onTouchStart={onTrimStart}
         onMouseUp={onTrimComplete}
         onTouchEnd={onTrimComplete}
         id="trim-start"
@@ -42,10 +92,10 @@ export const TrimmerControl = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
               className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
-                start < 10 ? "left-0" : "left-1/2 -translate-x-1/2"
+                startPercent < 10 ? "left-0" : "left-1/2 -translate-x-1/2"
               }`}
             >
-              {formatTime((duration * start) / 100)}
+              {formatTime(start)}
             </motion.span>
           )}
         </AnimatePresence>
@@ -53,8 +103,8 @@ export const TrimmerControl = ({
       </div>
 
       <div
-        onMouseDown={(e) => onTrimEnd(e)}
-        onTouchStart={(e) => onTrimEnd(e)}
+        onMouseDown={onTrimEnd}
+        onTouchStart={onTrimEnd}
         onMouseUp={onTrimComplete}
         onTouchEnd={onTrimComplete}
         id="trim-end"
@@ -68,11 +118,10 @@ export const TrimmerControl = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
               className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
-                end > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
+                endPercent > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
               }`}
             >
-              {formatTime((duration * start) / 100)} -{" "}
-              {formatTime((duration * end) / 100)}
+              {formatTime(start)} - {formatTime(end)}
             </motion.span>
           ) : (
             <motion.span
@@ -80,10 +129,10 @@ export const TrimmerControl = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
               className={`absolute -bottom-8 whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black/80 shadow-sm ${
-                end > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
+                endPercent > 90 ? "right-0" : "left-1/2 -translate-x-1/2"
               }`}
             >
-              {formatTime((duration * end) / 100)}
+              {formatTime(end)}
             </motion.span>
           )}
         </AnimatePresence>

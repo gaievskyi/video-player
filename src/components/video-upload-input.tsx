@@ -43,7 +43,9 @@ export const VideoUploadInput = ({
     loadUploadedVideos()
   }, [])
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     await onChange(event)
     // Refresh the list after upload
     await loadUploadedVideos()
@@ -61,17 +63,17 @@ export const VideoUploadInput = ({
     }
   }
 
-  const handleMouseEnter = useCallback((
-    videoRef: React.RefObject<HTMLVideoElement>,
-    filename?: string
-  ) => {
-    if (videoRef.current) {
-      videoRef.current.play()
-    }
-    if (filename) {
-      handleVideoHover(filename)
-    }
-  }, [handleVideoHover])
+  const handleMouseEnter = useCallback(
+    (videoRef: React.RefObject<HTMLVideoElement>, filename?: string) => {
+      if (videoRef.current) {
+        videoRef.current.play()
+      }
+      if (filename) {
+        handleVideoHover(filename)
+      }
+    },
+    [handleVideoHover],
+  )
 
   return (
     <div className="flex flex-col items-center gap-8">
@@ -114,7 +116,9 @@ export const VideoUploadInput = ({
         <div className="flex gap-4">
           <button
             onClick={() => onExampleClick(EXAMPLE_VIDEOS.earth.filename)}
-            onMouseEnter={() => handleMouseEnter(earthVideoRef, EXAMPLE_VIDEOS.earth.filename)}
+            onMouseEnter={() =>
+              handleMouseEnter(earthVideoRef, EXAMPLE_VIDEOS.earth.filename)
+            }
             onMouseLeave={() => handleMouseLeave(earthVideoRef)}
             className="hover:border-foreground group relative h-20 w-32 overflow-hidden rounded-lg border border-[#171717]"
           >
@@ -133,7 +137,9 @@ export const VideoUploadInput = ({
           </button>
           <button
             onClick={() => onExampleClick(EXAMPLE_VIDEOS.bunny.filename)}
-            onMouseEnter={() => handleMouseEnter(bunnyVideoRef, EXAMPLE_VIDEOS.bunny.filename)}
+            onMouseEnter={() =>
+              handleMouseEnter(bunnyVideoRef, EXAMPLE_VIDEOS.bunny.filename)
+            }
             onMouseLeave={() => handleMouseLeave(bunnyVideoRef)}
             className="hover:border-foreground group relative h-20 w-32 overflow-hidden rounded-lg border border-[#171717]"
           >
@@ -147,7 +153,7 @@ export const VideoUploadInput = ({
             >
               <source src={EXAMPLE_VIDEOS.bunny.src} type="video/webm" />
             </video>
-            <span className="absolute bottom-1 left-2 text-xs font-medium drop-shadow-lg mix-blend-difference bg-black/50">
+            <span className="absolute bottom-1 left-2 bg-black/50 text-xs font-medium mix-blend-difference drop-shadow-lg">
               Bunny
             </span>
           </button>
@@ -165,11 +171,7 @@ export const VideoUploadInput = ({
                 onMouseEnter={() => handleVideoHover(video.filename)}
                 className="group relative aspect-video w-full overflow-hidden rounded-lg border border-[#171717] bg-black/20 transition-all hover:border-gray-500 hover:ring-1 hover:ring-gray-500"
               >
-                <video
-                  className="h-full w-full object-cover"
-                  muted
-                  playsInline
-                >
+                <video className="h-full w-full object-cover" muted playsInline>
                   <source src={video.src} type="video/mp4" />
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
