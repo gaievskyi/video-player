@@ -179,7 +179,7 @@ export const VideoEditor = () => {
         filename: videoData?.filename || "",
       }}
     >
-      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center lg:w-[52rem]">
+      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center lg:w-[52rem] px-4 pb-4">
         <AnimatePresence mode="wait">
           {videoData ? (
             <VideoPreview key={videoData.filename} src={videoData.src} />
