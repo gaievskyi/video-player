@@ -1,8 +1,11 @@
+import clsx from "clsx"
 import { AnimatePresence, motion } from "framer-motion"
-import type { HTMLProps } from "react"
-import { useState } from "react"
+import { useState, type ComponentProps } from "react"
 import { PauseIcon } from "~/components/icons/pause-icon"
 import { PlayIcon } from "~/components/icons/play-icon"
+import { useVideoEditorContext } from "~/components/video-editor-context"
+import { useRouter } from "~/lib/router"
+import { formatTime } from "~/lib/utils"
 import { SeekIndicator } from "./seek-indicator"
 
 type VideoContainerProps = {
@@ -16,7 +19,8 @@ type VideoContainerProps = {
   onTimeUpdate: React.ReactEventHandler
   onLoadedMetadata: () => void
   src: string
-  props: Omit<HTMLProps<HTMLVideoElement>, "ref">
+  duration: number
+  props: Omit<ComponentProps<"video">, "ref">
 }
 
 export const VideoContainer = ({
@@ -30,71 +34,178 @@ export const VideoContainer = ({
   onTimeUpdate,
   onLoadedMetadata,
   src,
+  duration,
   props,
 }: VideoContainerProps) => {
+  const { navigate } = useRouter()
+  const { filename } = useVideoEditorContext()
+  const [aspectRatio, setAspectRatio] = useState<number>(16 / 9)
   const [isHovering, setIsHovering] = useState(false)
+  const [fitMode, setFitMode] = useState(true)
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent) => {
+    const video = e.currentTarget as HTMLVideoElement
+    setAspectRatio(video.videoWidth / video.videoHeight)
+    onLoadedMetadata()
+  }
+
+  const isVertical = aspectRatio < 1
+  const [name, extension] = filename.split(".")
 
   return (
-    <div className="relative w-full">
-      <AnimatePresence mode="wait">
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ duration: 0.5, type: "spring", bounce: 0.2 }}
-          className="group relative aspect-video w-full overflow-hidden rounded-[1.2rem] border border-[#171717] bg-black lg:rounded-[1.8rem]"
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
+    <div
+      onClick={onVideoClick}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      className={clsx(
+        "group relative flex h-full w-full items-center justify-center overflow-hidden rounded-none bg-black sm:rounded-xl",
+        isVertical ? ["sm:aspect-video sm:h-auto"] : ["aspect-video h-auto"],
+      )}
+    >
+      <video
+        ref={videoRef}
+        className={clsx(
+          "h-full w-full",
+          isVertical
+            ? [
+                "object-contain",
+                fitMode ? "sm:object-contain" : "sm:object-cover",
+              ]
+            : "object-contain",
+        )}
+        muted={isMuted}
+        playsInline
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        src={src}
+        {...props}
+      />
+
+      {/* Dark gradient overlays */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
+
+      {/* Mobile header with meta info and close button */}
+      <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-4 sm:hidden">
+        <div className="text-white">
+          <h3 className="text-sm font-medium drop-shadow-lg">{name}</h3>
+          <div className="flex items-center gap-1.5 text-xs text-white/80 drop-shadow-lg">
+            <span>.{extension}</span>
+            <span className="text-white/60">•</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate("/")
+          }}
+          className="rounded-full bg-black/40 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
         >
-          <video
-            ref={videoRef}
-            onClick={onVideoClick}
-            onTimeUpdate={onTimeUpdate}
-            onLoadedMetadata={onLoadedMetadata}
-            className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 object-contain"
-            playsInline
-            autoPlay
-            loop
-            muted={isMuted}
-            {...props}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <source src={src} />
-            Your browser doesn't support <code>HTML5 video</code>
-          </video>
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovering ? 1 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/20"
-          />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isHovering ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+        className="pointer-events-none absolute inset-0 bg-black/20 sm:pointer-events-auto"
+      />
 
-          <AnimatePresence mode="wait">
-            {isHovering && (
-              <button
-                onClick={onPlayClick}
-                className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-transform"
+      {/* Fit/Fill toggle for vertical videos on desktop */}
+      {isVertical && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovering ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setFitMode(!fitMode)
+          }}
+          className="absolute bottom-4 left-4 hidden items-center gap-2 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/70 sm:flex"
+        >
+          {fitMode ? (
+            <>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <>
-                  {isPlaying ? (
-                    <PauseIcon className="h-8 w-8" />
-                  ) : (
-                    <PlayIcon className="h-9 w-9 pt-1" />
-                  )}
-                </>
-              </button>
-            )}
-          </AnimatePresence>
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M9 3v18" />
+                <path d="M15 3v18" />
+              </svg>
+              Fit
+            </>
+          ) : (
+            <>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M3 12h18" />
+              </svg>
+              Fill
+            </>
+          )}
+        </motion.button>
+      )}
 
-          <AnimatePresence>
-            {seekDirection && (
-              <SeekIndicator
-                direction={seekDirection}
-                seekIncrement={seekIncrement}
-              />
+      {/* Play/Pause button */}
+      <AnimatePresence mode="wait">
+        {isHovering && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            onClick={onPlayClick}
+            className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-transform hover:scale-105 active:scale-95"
+          >
+            {isPlaying ? (
+              <PauseIcon className="h-8 w-8" />
+            ) : (
+              <PlayIcon className="h-9 w-9 pt-1" />
             )}
-          </AnimatePresence>
-        </motion.div>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Seek indicator */}
+      <AnimatePresence>
+        {seekDirection && (
+          <SeekIndicator
+            direction={seekDirection}
+            seekIncrement={seekIncrement}
+          />
+        )}
       </AnimatePresence>
     </div>
   )

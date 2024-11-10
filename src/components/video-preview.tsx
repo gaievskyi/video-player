@@ -69,6 +69,9 @@ export const VideoPreview = ({
     if (Number.isFinite(start)) {
       videoRef.current.currentTime = start
     }
+
+    // Autoplay the video
+    videoRef.current.play().catch(console.error)
   }
 
   const togglePlay = (): void => {
@@ -294,11 +297,13 @@ export const VideoPreview = ({
         filter: isVideoReady ? "blur(0px)" : "blur(10px)",
       }}
       transition={{ duration: 0.6, type: "spring", bounce: 0.35 }}
-      className="flex max-h-[100svh] w-full flex-col gap-6 px-4"
+      className="flex h-[100svh] w-full flex-col px-4 sm:gap-6"
     >
-      <VideoPreviewHeader duration={duration} src={src} />
+      <div className="hidden sm:block">
+        <VideoPreviewHeader duration={duration} src={src} />
+      </div>
 
-      <div className="relative w-full">
+      <div className="relative min-h-0 w-full flex-1">
         <VideoContainer
           videoRef={videoRef}
           isPlaying={isPlaying}
@@ -313,7 +318,8 @@ export const VideoPreview = ({
           onTimeUpdate={syncSeekWithVideoValue}
           onLoadedMetadata={onLoadedMetadata}
           src={src}
-          props={props}
+          duration={duration}
+          props={{ ...props, autoPlay: true }}
         />
 
         <VolumeControl
@@ -330,16 +336,18 @@ export const VideoPreview = ({
         />
       </div>
 
-      <TrimmerContainer
-        duration={duration}
-        seekRef={seekRef}
-        onTrimStart={(e) => onTrim(e, false)}
-        onTrimEnd={(e) => onTrim(e, true)}
-        onTrimComplete={trimVideo}
-        onSeekInput={syncVideoWithSeekValue}
-        onSeekMouseDown={onMouseDown}
-        onSeekMouseUp={onMouseUp}
-      />
+      <div className="w-full py-4 sm:py-0">
+        <TrimmerContainer
+          duration={duration}
+          seekRef={seekRef}
+          onTrimStart={(e) => onTrim(e, false)}
+          onTrimEnd={(e) => onTrim(e, true)}
+          onTrimComplete={trimVideo}
+          onSeekInput={syncVideoWithSeekValue}
+          onSeekMouseDown={onMouseDown}
+          onSeekMouseUp={onMouseUp}
+        />
+      </div>
     </motion.div>
   )
 }

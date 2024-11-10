@@ -1,9 +1,10 @@
 import { useQueryStates } from "nuqs"
+import { FileStackIcon } from "~/components/icons/file-stack-icon"
 import { useRouter } from "~/lib/router"
 import { parseAsTime } from "~/lib/time-query-parser"
+import { formatTime } from "~/lib/utils"
 import { SaveButton } from "./video-controls/save-button"
 import { useVideoEditorContext } from "./video-editor-context"
-import { FileStackIcon } from '~/components/icons/file-stack-icon'
 
 interface VideoPreviewHeaderProps {
   duration: number
@@ -33,10 +34,16 @@ export const VideoPreviewHeader = ({
   return (
     <div className="inline-flex w-full items-center justify-between gap-4 rounded-2xl border border-[#171717] bg-black/20 px-6 py-4 backdrop-blur-sm">
       <div className="flex items-center gap-3">
-          <FileStackIcon />
+        <FileStackIcon />
         <div className="flex flex-col">
           <span className="max-w-[200px] truncate font-medium">{name}</span>
-          <span className="text-sm text-white/60">.{extension}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-white/60">.{extension}</span>
+            <span className="text-sm text-white/40">•</span>
+            <span className="text-sm text-white/60">
+              {formatTime(duration)}
+            </span>
+          </div>
         </div>
       </div>
 
