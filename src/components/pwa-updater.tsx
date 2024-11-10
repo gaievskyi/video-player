@@ -77,7 +77,7 @@ export function PWAUpdater() {
                 </motion.div>
               )}
               {isOnline && !isReconnecting && !showOnlineStatus && offlineReady && (
-                <span>Ready to work offline</span>
+                <span>I can work offline</span>
               )}
               {isOnline && !isReconnecting && !showOnlineStatus && needRefresh && (
                 <>
