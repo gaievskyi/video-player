@@ -2,7 +2,6 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion"
 import { useRef, useState } from "react"
 import { ErrorAlert } from "~/components/error-alert"
 import { Spinner } from "~/components/spinner"
-import { checkCodecSupport } from "~/lib/codec-support"
 import { VideoProcessor } from "~/lib/process-video"
 
 interface SaveButtonProps {
@@ -19,7 +18,6 @@ export const SaveButton = ({
   const [isSaving, setIsSaving] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isHovered, setIsHovered] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const handleSave = async () => {
@@ -28,36 +26,53 @@ export const SaveButton = ({
       setError(null)
       setIsSuccess(false)
 
-      const support = checkCodecSupport()
-      if (!support.webm && !support.mp4) {
+      if (!VideoProcessor.checkSupport()) {
         throw new Error(
-          "Your browser doesn't support video processing. Please try Chrome or Firefox.",
+          "Your browser doesn't support video processing.",
         )
       }
 
       const response = await fetch(videoSrc)
       const videoFile = await response.blob()
 
+      // Get original filename and extension
+      const fileName = videoSrc.split("/").pop() || "video"
+
+      // Extract extension from either filename or blob type
+      let extension = fileName.split(".").pop()?.toLowerCase() || ""
+      if (!extension || extension.length > 4) { // Handle cases where the "extension" might be a UUID or invalid
+        extension = videoFile.type.split("/")[1] || ""
+      }
+
+      // Clean up extension (remove any parameters or extra data)
+      extension = extension.split(";")[0].trim()
+
+      // Validate file format
+      if (!["mp4", "webm"].includes(extension)) {
+        throw new Error(
+          "This video format is not supported yet. Please use MP4 or WebM videos or try a different browser."
+        )
+      }
+
       const processor = new VideoProcessor(startTime, endTime)
       const trimmedVideo = await processor.trimVideo(videoFile)
 
-      // Get original filename and extension
-      const fileName = videoSrc.split("/").pop() || "video"
-      const extension = fileName.split(".").pop()?.toLowerCase() || "mp4"
+      // Get base filename without extension
       const nameWithoutExt = fileName.split(".")[0]
+      // If nameWithoutExt is too long or looks like a UUID, use "video" instead
+      const finalBaseName = /^[0-9a-f-]{32,}$/i.test(nameWithoutExt) ? "video" : nameWithoutExt
 
       // Create download link
       const url = URL.createObjectURL(trimmedVideo)
       const a = document.createElement("a")
       a.href = url
-      a.download = `${nameWithoutExt}-trimmed.${extension}`
+      a.download = `${finalBaseName}-trimmed.${extension}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
 
       setIsSuccess(true)
-      // Reset success state after 2 seconds
       setTimeout(() => {
         setIsSuccess(false)
       }, 2000)
@@ -91,22 +106,12 @@ export const SaveButton = ({
           layout
           onClick={handleSave}
           disabled={isSaving}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
           className={`group relative flex items-center gap-2.5 rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium shadow-lg backdrop-blur-md transition-all duration-500 disabled:opacity-50 ${buttonColors} ${
             isSaving ? "min-w-[140px]" : "min-w-[110px]"
           }`}
-          whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
         >
-          <motion.div
-            className="absolute inset-0 rounded-full bg-gradient-to-t from-white/[0.08] to-transparent"
-            initial={false}
-            animate={{
-              opacity: isHovered ? 1 : 0,
-            }}
-            transition={{ duration: 0.3 }}
-          />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-white/[0.08] to-transparent" />
 
           <AnimatePresence mode="wait">
             {isSaving ? (
@@ -119,11 +124,8 @@ export const SaveButton = ({
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
               >
-                <Spinner
-                  className="size-3.5"
-                  particleClassName="bg-white"
-                />
-                <motion.span layout className="text-white tracking-wide">
+                <Spinner className="size-3.5" particleClassName="bg-white" />
+                <motion.span layout className="tracking-wide text-white">
                   Processing
                 </motion.span>
               </motion.div>
@@ -150,7 +152,7 @@ export const SaveButton = ({
                     type: "spring",
                     stiffness: 200,
                     damping: 12,
-                    delay: 0.1
+                    delay: 0.1,
                   }}
                 >
                   <path
@@ -161,7 +163,7 @@ export const SaveButton = ({
                     strokeLinejoin="round"
                   />
                 </motion.svg>
-                <motion.span layout className="text-white tracking-wide">
+                <motion.span layout className="tracking-wide text-white">
                   Exported
                 </motion.span>
               </motion.div>
@@ -176,12 +178,12 @@ export const SaveButton = ({
                 transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
               >
                 <motion.svg
-                  width="14"
-                  height="14"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="text-white transition-transform duration-300 group-hover:-translate-y-0.5"
+                  className="text-white transition-transform duration-300"
                 >
                   <path
                     d="M21 15V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V15M17 10L12 15M12 15L7 10M12 15V3"
@@ -191,22 +193,14 @@ export const SaveButton = ({
                     strokeLinejoin="round"
                   />
                 </motion.svg>
-                <motion.span layout className="text-white tracking-wide">
+                <motion.span layout className="tracking-wide text-white">
                   Export
                 </motion.span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <motion.div
-            className="absolute inset-0 rounded-full ring-4 ring-white/20"
-            initial={false}
-            animate={{
-              opacity: isHovered ? 1 : 0,
-              scale: isHovered ? 1.05 : 1,
-            }}
-            transition={{ duration: 0.3 }}
-          />
+          <div className="absolute inset-0 rounded-full ring-4 ring-white/20" />
         </motion.button>
         <ErrorAlert error={error} buttonRef={buttonRef} />
       </LayoutGroup>

@@ -1,109 +1,101 @@
-import { checkCodecSupport, type SupportedFormat } from "./codec-support"
+import { checkCodecSupport } from "./codec-support"
 
 export class VideoProcessor {
   private startTime: number
   private endTime: number
-  private mediaRecorder: MediaRecorder | null = null
 
   constructor(startTime: number, endTime: number) {
     this.startTime = startTime
     this.endTime = endTime
   }
 
-  private getInputFormat(videoFile: Blob): SupportedFormat {
-    const type = videoFile.type.toLowerCase()
-    return type.includes("webm") ? "webm" : "mp4"
-  }
+  async trimVideo(videoFile: Blob): Promise<Blob> {
+    const video = document.createElement("video")
+    video.src = URL.createObjectURL(videoFile)
+    await new Promise((resolve) => {
+      video.onloadedmetadata = resolve
+    })
 
-  private getBestSupportedMimeType(
-    support: ReturnType<typeof checkCodecSupport>,
-  ): string {
-    if (support.webm) return "video/webm"
-    if (support.mp4) return "video/mp4"
-    throw new Error("No supported video format found for recording")
-  }
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("Failed to get canvas context")
 
-  public async trimVideo(videoFile: Blob): Promise<Blob> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const support = checkCodecSupport()
-        const inputFormat = this.getInputFormat(videoFile)
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
 
-        if (!support[inputFormat]) {
-          throw new Error(
-            `Your browser doesn't support processing ${inputFormat.toUpperCase()} videos.`,
-          )
-        }
+    // Set video to start time
+    video.currentTime = this.startTime
 
-        const videoElement = document.createElement("video")
-        videoElement.muted = true
-        videoElement.playsInline = true
+    const chunks: Blob[] = []
 
-        // Create object URL for the video
-        const videoURL = URL.createObjectURL(videoFile)
-        videoElement.src = videoURL
+    // Determine output format and codec
+    const isMP4 = videoFile.type.includes("mp4")
+    const supportedTypes = [
+      'video/mp4;codecs=avc1.42E01E',
+      'video/mp4;codecs=h264',
+      'video/webm;codecs=vp8',
+      'video/webm;codecs=vp9',
+    ]
 
-        // Wait for metadata to load
-        await new Promise((resolve) => {
-          videoElement.onloadedmetadata = () => resolve(null)
-        })
+    let mimeType = 'video/webm;codecs=vp8' // default fallback
 
-        // Set initial time
-        videoElement.currentTime = this.startTime
+    // Find the first supported mime type
+    if (isMP4) {
+      const mp4Type = supportedTypes.find(type =>
+        type.includes('mp4') && MediaRecorder.isTypeSupported(type)
+      )
+      if (mp4Type) {
+        mimeType = mp4Type
+      }
+    }
 
-        // Create a canvas to draw video frames
-        const canvas = document.createElement("canvas")
-        canvas.width = videoElement.videoWidth
-        canvas.height = videoElement.videoHeight
-        const ctx = canvas.getContext("2d")!
+    const mediaRecorder = new MediaRecorder(canvas.captureStream(), {
+      mimeType,
+      videoBitsPerSecond: 8000000, // 8Mbps for better quality
+    })
 
-        // Create a media stream from the canvas
-        const stream = canvas.captureStream(30) // 30 FPS
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunks.push(e.data)
+      }
+    }
 
-        // Setup MediaRecorder with best supported format
-        this.mediaRecorder = new MediaRecorder(stream, {
-          mimeType: this.getBestSupportedMimeType(support),
-          videoBitsPerSecond: 8000000, // 8 Mbps
-        })
+    return new Promise((resolve, reject) => {
+      mediaRecorder.onstop = () => {
+        URL.revokeObjectURL(video.src)
+        const outputType = mimeType.startsWith('video/mp4') ? 'video/mp4' : 'video/webm'
+        const blob = new Blob(chunks, { type: outputType })
+        resolve(blob)
+      }
 
-        const chunks: Blob[] = []
-        this.mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data)
-          }
-        }
-
-        this.mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: videoFile.type })
-          URL.revokeObjectURL(videoURL)
-          resolve(blob)
-        }
-
-        // Start recording
-        this.mediaRecorder.start()
-
-        // Function to process frame
-        const processFrame = () => {
-          if (!this.mediaRecorder) return
-
-          if (videoElement.currentTime >= this.endTime) {
-            this.mediaRecorder.stop()
-            return
-          }
-
-          // Draw current frame to canvas
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height)
-
-          // Request next frame
-          requestAnimationFrame(processFrame)
-        }
-
-        // Start playback and processing
-        await videoElement.play()
-        processFrame()
-      } catch (error) {
+      mediaRecorder.onerror = (error) => {
+        URL.revokeObjectURL(video.src)
         reject(error)
       }
+
+      video.ontimeupdate = () => {
+        if (video.currentTime >= this.endTime) {
+          mediaRecorder.stop()
+          video.ontimeupdate = null
+          return
+        }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      }
+
+      // Start recording and playback
+      mediaRecorder.start()
+      video.play()
     })
+  }
+
+  // Helper method to check if the browser supports video recording
+  static checkSupport(): boolean {
+    const supportedTypes = [
+      'video/mp4;codecs=avc1.42E01E',
+      'video/mp4;codecs=h264',
+      'video/webm;codecs=vp8',
+      'video/webm;codecs=vp9',
+    ]
+    return supportedTypes.some(type => MediaRecorder.isTypeSupported(type))
   }
 }

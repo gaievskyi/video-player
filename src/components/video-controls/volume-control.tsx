@@ -65,7 +65,7 @@ export const VolumeControl = ({
           onMouseUp={handleMouseUp}
           onTouchStart={handleMouseDown}
           onTouchEnd={handleMouseUp}
-          className="volume-slider h-1 w-20 cursor-pointer appearance-none rounded-full bg-white/30 transition-all hover:bg-white/50"
+          className="volume-slider w-20 cursor-pointer appearance-none rounded-full bg-white/30 transition-all hover:bg-white/50"
           title={`Volume: ${Math.round(volume * 100)}%`}
         />
       </div>
