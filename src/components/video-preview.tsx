@@ -369,7 +369,7 @@ export const VideoPreview = ({
         />
       </div>
 
-      <div className="w-full">
+      <div className="w-full px-4">
         <TrimmerContainer
           duration={duration}
           seekRef={seekRef}
