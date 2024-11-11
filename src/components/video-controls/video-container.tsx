@@ -1,8 +1,6 @@
 import clsx from "clsx"
 import { AnimatePresence, motion } from "framer-motion"
 import { useState, type ComponentProps } from "react"
-import { PauseIcon } from "~/components/icons/pause-icon"
-import { PlayIcon } from "~/components/icons/play-icon"
 import { useVideoEditorContext } from "~/components/video-editor-context"
 import { useRouter } from "~/lib/router"
 import { formatTime } from "~/lib/utils"
@@ -29,12 +27,10 @@ type VideoContainerProps = {
 
 export const VideoContainer = ({
   videoRef,
-  isPlaying,
   isMuted,
   seekDirection,
   seekIncrement,
   onVideoClick,
-  onPlayClick,
   onTimeUpdate,
   onLoadedMetadata,
   src,
@@ -188,22 +184,6 @@ export const VideoContainer = ({
           )}
         </motion.button>
       )}
-
-      {/* Play/Pause button */}
-      <AnimatePresence mode="wait">
-        {isHovering && (
-          <motion.button
-            onClick={onPlayClick}
-            className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm"
-          >
-            {isPlaying ? (
-              <PauseIcon className="h-8 w-8" />
-            ) : (
-              <PlayIcon className="h-9 w-9 pt-1" />
-            )}
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       {/* Seek indicator */}
       <AnimatePresence>

@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { AttachFileIcon } from "~/components/icons/attach-file-icon"
+import { TrashIcon } from "~/components/icons/trash-icon"
 import type { UploadedVideo } from "~/lib/indexed-db"
 import { videoService } from "~/lib/video-service"
-import { TrashIcon } from "~/components/icons/trash-icon"
 
 const EXAMPLE_VIDEOS = {
   bunny: {
@@ -99,7 +99,7 @@ export const VideoUploadInput = ({
     <div className="flex flex-col items-center gap-8">
       <label
         htmlFor="dropzone-file"
-        className="group flex h-48 w-80 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#171717] bg-card transition-all hover:border-gray-400 hover:bg-card/80"
+        className="group flex h-48 w-80 flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#171717] bg-card transition-all hover:border-gray-400 hover:bg-card/80"
       >
         <div className="flex flex-col items-center justify-center px-6 text-center">
           <AttachFileIcon />

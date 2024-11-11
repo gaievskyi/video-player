@@ -325,6 +325,18 @@ export const VideoPreview = ({
     }
   }, [])
 
+  const isVideoTrimmed = start > 0 || end < duration
+
+  const handleExport = () => {
+    // Only show export button and handle export if video is trimmed
+    if (isVideoTrimmed) {
+      const saveButton = document.querySelector<HTMLButtonElement>('[data-save-button="true"]')
+      if (saveButton) {
+        saveButton.click()
+      }
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
@@ -379,6 +391,11 @@ export const VideoPreview = ({
           onSeekInput={syncVideoWithSeekValue}
           onSeekMouseDown={onMouseDown}
           onSeekMouseUp={onMouseUp}
+          isPlaying={isPlaying}
+          onPlayClick={togglePlay}
+          onExport={handleExport}
+          isVideoTrimmed={isVideoTrimmed}
+          videoSrc={src}
         />
       </div>
     </motion.div>

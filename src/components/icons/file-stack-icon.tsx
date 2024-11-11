@@ -7,7 +7,7 @@ const FileStackIcon = () => {
 
   return (
     <div
-      className="hover:bg-accent flex cursor-pointer select-none items-center justify-center rounded-md p-2 transition-colors duration-200"
+      className="hover:bg-accent flex select-none items-center justify-center rounded-md p-2 transition-colors duration-200"
       onMouseEnter={() => controls.start("animate")}
       onMouseLeave={() => controls.start("normal")}
     >

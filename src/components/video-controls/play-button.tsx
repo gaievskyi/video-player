@@ -13,7 +13,7 @@ export const PlayButton = ({ onClick }: PlayButtonProps) => {
       transition={{ duration: 0.2, type: "spring", bounce: 0.3 }}
       tabIndex={-1}
       onClick={onClick}
-      className="absolute inset-0 m-auto grid h-16 w-16 cursor-pointer place-items-center rounded-full bg-black/50 pl-0.5 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none backdrop-blur-sm hover:scale-105"
+      className="absolute inset-0 m-auto grid h-16 w-16 place-items-center rounded-full bg-black/50 pl-0.5 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none backdrop-blur-sm hover:scale-105"
     >
       <PlayIcon />
     </motion.button>

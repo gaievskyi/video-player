@@ -4,7 +4,7 @@
 
 @layer components {
   .seek {
-    @apply h-full w-full cursor-pointer appearance-none bg-transparent will-change-transform focus:outline-none;
+    @apply h-full w-full appearance-none bg-transparent will-change-transform focus:outline-none;
     position: relative;
   }
 
@@ -75,7 +75,6 @@
     height: 12px;
     border-radius: 50%;
     background: white;
-    cursor: pointer;
   }
 
   .volume-slider::-moz-range-thumb {
@@ -83,7 +82,6 @@
     height: 12px;
     border-radius: 50%;
     background: white;
-    cursor: pointer;
     border: none;
   }
 
@@ -94,6 +92,10 @@
   .mobile-button {
     @apply touch-target transition-opacity active:opacity-60;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    cursor: default;
   }
 }
 

@@ -9,7 +9,6 @@
   height: var(--thumb-size);
   border-radius: 50%;
   background: white;
-  cursor: pointer;
   transition: transform 0.1s ease;
 }
 
@@ -19,7 +18,6 @@
   border: none;
   border-radius: 50%;
   background: white;
-  cursor: pointer;
   transition: transform 0.1s ease;
 }
 
