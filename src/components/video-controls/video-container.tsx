@@ -97,7 +97,7 @@ export const VideoContainer = ({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       {/* Mobile header with meta info and close button */}
-      <div className="absolute left-0 right-0 top-0 flex items-start justify-between px-1 py-4 sm:hidden">
+      <div className="absolute left-0 right-0 top-8 flex items-center justify-between sm:hidden">
         <div className="text-white">
           <h3 className="text-sm font-medium drop-shadow-lg">{name}</h3>
           <div className="flex items-center gap-1.5 text-xs text-white/80 drop-shadow-lg">
@@ -111,7 +111,7 @@ export const VideoContainer = ({
             e.stopPropagation()
             navigate("/")
           }}
-          className="rounded-full bg-black/40 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+          className="rounded-full bg-black/40 p-4 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
