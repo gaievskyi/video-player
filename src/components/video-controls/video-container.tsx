@@ -93,7 +93,7 @@ export const VideoContainer = ({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       {/* Mobile header with meta info and close button */}
-      <div className="absolute left-0 right-0 top-8 flex items-center justify-between sm:hidden">
+      <div className="absolute left-0 -right-5 top-6 flex items-center justify-between sm:hidden">
         <div className="text-white">
           <h3 className="text-sm font-medium drop-shadow-lg">{name}</h3>
           <div className="flex items-center gap-1.5 text-xs text-white/80 drop-shadow-lg">
@@ -102,17 +102,18 @@ export const VideoContainer = ({
             <span>{formatTime(duration)}</span>
           </div>
         </div>
-        <button
+        <div
+          role="button"
           onClick={(e) => {
             e.stopPropagation()
             navigate("/")
           }}
-          className="rounded-full bg-black/40 p-4 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+          className="rounded-full p-4 mobile-button"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
+            width="24"
+            height="24"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -123,7 +124,7 @@ export const VideoContainer = ({
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
-        </button>
+        </div>
       </div>
 
       <motion.div
