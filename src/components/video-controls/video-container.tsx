@@ -67,11 +67,8 @@ export const VideoContainer = ({
       className={clsx(
         "group relative flex h-full w-full items-center justify-center overflow-hidden rounded-none bg-black sm:rounded-2xl",
         isVertical
-          ? [
-              "h-[calc(100vh-8rem)] pb-8 sm:pb-0",
-              "sm:aspect-video sm:h-auto"
-            ]
-          : "h-screen sm:aspect-video sm:h-auto"
+          ? ["h-[calc(100vh-8rem)] pb-8 sm:pb-0", "sm:aspect-video sm:h-auto"]
+          : "h-screen sm:aspect-video sm:h-auto",
       )}
     >
       <video
@@ -83,12 +80,9 @@ export const VideoContainer = ({
                 "h-full w-auto max-w-full",
                 fitMode
                   ? "sm:h-full sm:w-auto sm:object-contain"
-                  : "sm:h-full sm:w-full sm:object-cover"
+                  : "sm:h-full sm:w-full sm:object-cover",
               ]
-            : [
-                "object-contain",
-                "h-auto max-h-[100vh] w-full sm:h-full",
-              ]
+            : ["object-contain", "h-auto max-h-[100vh] w-full sm:h-full"],
         )}
         muted={isMuted}
         playsInline
@@ -103,7 +97,7 @@ export const VideoContainer = ({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
 
       {/* Mobile header with meta info and close button */}
-      <div className="absolute left-0 right-0 top-0 flex items-start justify-between py-4 px-1 sm:hidden">
+      <div className="absolute left-0 right-0 top-0 flex items-start justify-between px-1 py-4 sm:hidden">
         <div className="text-white">
           <h3 className="text-sm font-medium drop-shadow-lg">{name}</h3>
           <div className="flex items-center gap-1.5 text-xs text-white/80 drop-shadow-lg">

@@ -14,7 +14,7 @@ export const SeekIndicator = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`absolute top-1/2 -translate-y-1/2 ${
+      className={`pointer-events-none absolute top-1/2 -translate-y-1/2 ${
         direction === "left" ? "left-4" : "right-4"
       } rounded-full bg-white/20 p-3 backdrop-blur-sm`}
     >

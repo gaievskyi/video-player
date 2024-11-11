@@ -1,17 +1,12 @@
-import { useQueryStates } from "nuqs"
 import { useEffect, useRef, useState } from "react"
-import { parseAsTime } from "~/lib/time-query-parser"
 import { type Frame } from "~/lib/video-to-frames"
 import { useFrames } from "./video-editor-context"
+import { cn } from "~/lib/utils"
 
-export const Frames = () => {
+export const Frames = ({ isDirty }: { isDirty: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [frames, setFrames] = useState<Frame[]>([])
   const videoFrames = useFrames()
-  const [{ start, end }] = useQueryStates({
-    start: parseAsTime.withDefault(0),
-    end: parseAsTime.withDefault(0),
-  })
 
   // Initialize frames when videoFrames change
   useEffect(() => {
@@ -50,26 +45,21 @@ export const Frames = () => {
 
     resizeObserver.observe(containerRef.current)
     return () => resizeObserver.disconnect()
-  }, [frames.length])
+  }, [frames])
 
   if (!frames.length) return null
 
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 flex h-full w-full overflow-hidden rounded-xl"
+      className={cn(
+        "absolute inset-0 flex h-full w-full overflow-clip",
+        !isDirty && "rounded-xl",
+      )}
     >
       {frames.map((frame) => {
-        const isInRange = Number(frame.id) >= start && Number(frame.id) <= end
         return (
-          <div
-            key={frame.id}
-            className="relative h-full flex-1"
-            style={{
-              filter: isInRange ? "none" : "blur(2px)",
-              transition: "filter 0.2s ease-in-out",
-            }}
-          >
+          <div key={frame.id} className="relative h-full flex-1">
             <img
               src={frame.src}
               alt={`Frame ${frame.id}`}

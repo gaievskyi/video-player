@@ -1,8 +1,7 @@
-import debounce from 'lodash.debounce'
-import { useState } from 'react'
-import { useEffect } from 'react'
-import { formatTime } from '~/components/video-controls/trimmer-container'
-
+import debounce from "lodash.debounce"
+import { useState } from "react"
+import { useEffect } from "react"
+import { formatTime } from "~/components/video-controls/trimmer-container"
 
 export const useResponsiveRuler = (duration: number) => {
   const [rulerConfig, setRulerConfig] = useState({
@@ -89,7 +88,7 @@ export const TimeRuler = ({ duration }: { duration: number }) => {
         className="absolute flex flex-col items-center"
         style={{
           left: `${percent}%`,
-          transform: isFirstMarker ? 'translateX(0)' : 'translateX(-50%)'
+          transform: isFirstMarker ? "translateX(0)" : "translateX(-50%)",
         }}
       >
         <div
@@ -106,7 +105,7 @@ export const TimeRuler = ({ duration }: { duration: number }) => {
             {formatTime(i, compact)}
           </span>
         )}
-      </div>
+      </div>,
     )
   }
 
@@ -116,8 +115,8 @@ export const TimeRuler = ({ duration }: { duration: number }) => {
       key="end"
       className="absolute flex flex-col items-center"
       style={{
-        left: '100%',
-        transform: 'translateX(-100%)'
+        left: "100%",
+        transform: "translateX(-100%)",
       }}
     >
       <div className="h-2 w-[1.5px] bg-zinc-600 transition-all duration-200" />
@@ -126,7 +125,7 @@ export const TimeRuler = ({ duration }: { duration: number }) => {
           {formatTime(duration, compact)}
         </span>
       )}
-    </div>
+    </div>,
   )
 
   return (

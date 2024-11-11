@@ -17,6 +17,11 @@ const EXAMPLE_VIDEOS = {
     src: "/earth.mp4",
     filename: "earth.mp4",
   },
+  example: {
+    id: "example",
+    src: "/example.MOV",
+    filename: "example.MOV",
+  },
 } as const
 
 type VideoUploadInputProps = ComponentProps<"input"> & {
@@ -158,6 +163,12 @@ export const VideoUploadInput = ({
             <span className="absolute bottom-1 left-2 bg-black/50 text-xs font-medium mix-blend-difference drop-shadow-lg">
               Bunny
             </span>
+          </button>
+          <button
+            onClick={() => onExampleClick(EXAMPLE_VIDEOS.example.filename)}
+            className="hover:border-foreground group relative h-20 w-32 overflow-hidden rounded-lg border border-[#171717]"
+          >
+            <span>Example</span>
           </button>
         </div>
       </div>

@@ -26,6 +26,12 @@ const EXAMPLE_VIDEOS = {
     filename: "earth.mp4",
     frames: [] as Frame[],
   },
+  example: {
+    id: "example.MOV",
+    src: "/example.MOV",
+    filename: "example.MOV",
+    frames: [] as Frame[],
+  },
 }
 
 type VideoData = {
@@ -179,7 +185,7 @@ export const VideoEditor = () => {
         filename: videoData?.filename || "",
       }}
     >
-      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center lg:w-[52rem] px-4 pb-8">
+      <div className="container relative m-auto flex h-[100svh] w-full flex-col items-center justify-center px-4 pb-8 lg:w-[52rem]">
         <AnimatePresence mode="wait">
           {videoData ? (
             <VideoPreview key={videoData.filename} src={videoData.src} />

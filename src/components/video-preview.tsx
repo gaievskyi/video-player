@@ -100,7 +100,7 @@ export const VideoPreview = ({
         seek.value = percentValue.toFixed(2)
         seek.setAttribute("current-time", formatTime(video.currentTime))
         const thumbPosition = (seek.clientWidth * percentValue) / 100
-        seek.style.setProperty("--transform-x", `${thumbPosition}px`)
+        seek.style.setProperty("--transform-x", `${thumbPosition.toFixed(0)}px`)
       }
     }
 
@@ -160,28 +160,39 @@ export const VideoPreview = ({
   ): void => {
     if (!videoRef.current) return
     e.preventDefault()
+
     const video = videoRef.current
-    const startX = "touches" in e ? e.touches[0].clientX : e.clientX
-    const initialTime = isEnd ? end : start
-    const initialPercent = (initialTime / video.duration) * 100
+    const container = video.parentElement
+    if (!container) return
+
+    const containerRect = container.getBoundingClientRect()
 
     const onDrag = (moveEvent: MouseEvent | TouchEvent) => {
       if (!videoRef.current) return
+      moveEvent.preventDefault() // Prevent scrolling on mobile
+
       const currentX =
         "touches" in moveEvent
           ? moveEvent.touches[0].clientX
           : moveEvent.clientX
-      const delta = currentX - startX
-      const deltaPercent = (delta / video.clientWidth) * 100
-      const newPercent = initialPercent + deltaPercent
-      const newTime = (newPercent * video.duration) / 100
 
+      // Calculate position relative to container
+      const containerX = currentX - containerRect.left
+      const percentPosition = (containerX / containerRect.width) * 100
+
+      // Clamp percentage between 0 and 100
+      const clampedPercent = Math.max(0, Math.min(100, percentPosition))
+
+      // Convert percentage to time
+      const newTime = (duration * clampedPercent) / 100
+
+      // Apply constraints based on whether it's start or end handle
       if (isEnd) {
-        if (newPercent <= 100 && newTime >= start + 1) {
+        if (newTime > start + 1 && newTime <= duration) {
           setVideoState({ end: newTime })
         }
       } else {
-        if (newPercent >= 0 && newTime <= end - 1) {
+        if (newTime < end - 1 && newTime >= 0) {
           setVideoState({ start: newTime })
         }
       }
@@ -194,9 +205,9 @@ export const VideoPreview = ({
       document.removeEventListener("touchend", onDragEnd)
     }
 
-    document.addEventListener("mousemove", onDrag)
+    document.addEventListener("mousemove", onDrag, { passive: false })
     document.addEventListener("mouseup", onDragEnd)
-    document.addEventListener("touchmove", onDrag)
+    document.addEventListener("touchmove", onDrag, { passive: false })
     document.addEventListener("touchend", onDragEnd)
   }
 
@@ -293,6 +304,26 @@ export const VideoPreview = ({
       setIsMuted(true)
     }
   }
+
+  // Add this near the top of the component where other event handlers are defined
+  const preventContextMenu = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+  }
+
+  // Add this useEffect near other useEffects
+  useEffect(() => {
+    if (!videoRef.current) return
+    const video = videoRef.current
+
+    // Prevent context menu on long press
+    video.addEventListener("contextmenu", preventContextMenu)
+    video.addEventListener("touchstart", preventContextMenu, { passive: false })
+
+    return () => {
+      video.removeEventListener("contextmenu", preventContextMenu)
+      video.removeEventListener("touchstart", preventContextMenu)
+    }
+  }, [])
 
   return (
     <motion.div

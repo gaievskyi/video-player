@@ -38,7 +38,7 @@ export const VolumeControl = ({
 
   return (
     <div
-      className="absolute bottom-10 right-2 lg:right-4 z-10 flex items-center rounded-full bg-black/60 p-1 backdrop-blur-sm"
+      className="absolute bottom-10 right-2 z-10 flex items-center rounded-full bg-black/60 p-1 backdrop-blur-sm lg:right-4"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isDragging && setIsHovered(false)}
       onClick={(e) => e.stopPropagation()}

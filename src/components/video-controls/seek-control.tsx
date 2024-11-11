@@ -1,5 +1,5 @@
-import { forwardRef } from "react"
 import { useQueryStates } from "nuqs"
+import { forwardRef, useState } from "react"
 import { parseAsTime } from "~/lib/time-query-parser"
 
 type SeekControlProps = {
@@ -21,8 +21,31 @@ export const SeekControl = forwardRef<HTMLInputElement, SeekControlProps>(
       },
     )
 
+    const [isSeeking, setIsSeeking] = useState(false)
+
     const startPercent = (start / duration) * 100
     const endPercent = (end / duration) * 100
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+      setIsSeeking(true)
+      onMouseDown(e as unknown as React.MouseEvent)
+    }
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+      setIsSeeking(false)
+      onMouseUp(e as unknown as React.MouseEvent)
+    }
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLInputElement>) => {
+      e.preventDefault()
+      const input = e.target as HTMLInputElement
+      const touch = e.touches[0]
+      const rect = input.getBoundingClientRect()
+      const x = touch.clientX - rect.left
+      const percentage = (x / rect.width) * 100
+      input.value = Math.max(0, Math.min(100, percentage)).toString()
+      onInput(e)
+    }
 
     return (
       <input
@@ -35,13 +58,20 @@ export const SeekControl = forwardRef<HTMLInputElement, SeekControlProps>(
         onInput={onInput}
         onMouseDown={onMouseDown}
         onMouseUp={onMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={
           {
             "--start": `${startPercent}%`,
             "--end": `${endPercent}%`,
+            outline: "none",
+            touchAction: "none", // Prevent scrolling while seeking
           } as React.CSSProperties
         }
-        className="seek absolute z-10 w-full"
+        className={`seek absolute z-50 w-full touch-none focus:outline-none focus:ring-0 ${
+          isSeeking ? "seeking" : ""
+        }`}
       />
     )
   },
