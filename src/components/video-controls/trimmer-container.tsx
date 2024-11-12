@@ -1,15 +1,15 @@
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 
 import { useQueryStates } from "nuqs"
+import { ErrorAlert } from "~/components/error-alert"
+import { Spinner } from "~/components/spinner"
 import { TimeRuler } from "~/components/video-controls/time-ruler"
+import { VideoProcessor } from "~/lib/process-video"
 import { parseAsTime } from "~/lib/time-query-parser"
 import { Frames } from "../frames"
 import { SeekControl } from "./seek-control"
 import { TrimmerControl } from "./trimmer-control"
-import { Spinner } from "~/components/spinner"
-import { ErrorAlert } from "~/components/error-alert"
-import { VideoProcessor } from "~/lib/process-video"
 
 type TrimmerContainerProps = {
   duration: number
@@ -112,13 +112,19 @@ const TimeIndicator = ({ duration }: { duration: number }) => {
   )
 }
 
-const PlayButton = ({ isPlaying, onClick }: { isPlaying: boolean; onClick: () => void }) => {
+const PlayButton = ({
+  isPlaying,
+  onClick,
+}: {
+  isPlaying: boolean
+  onClick: () => void
+}) => {
   return (
     <button
       onClick={onClick}
       className="absolute -left-20 bottom-0 top-0 flex h-full w-14 items-center justify-center rounded-lg bg-white/10 transition-colors hover:bg-white/15 active:bg-white/20"
       style={{
-        backdropFilter: 'blur(8px)',
+        backdropFilter: "blur(8px)",
       }}
     >
       <svg
@@ -129,7 +135,7 @@ const PlayButton = ({ isPlaying, onClick }: { isPlaying: boolean; onClick: () =>
         xmlns="http://www.w3.org/2000/svg"
         className="transition-transform"
         style={{
-          transform: isPlaying ? 'scale(0.9)' : 'scale(1)',
+          transform: isPlaying ? "scale(0.9)" : "scale(1)",
         }}
       >
         {isPlaying ? (
@@ -152,7 +158,7 @@ const ExportButton = ({
   isVisible,
   videoSrc,
   startTime,
-  endTime
+  endTime,
 }: {
   onClick: () => void
   isVisible: boolean
@@ -183,7 +189,8 @@ const ExportButton = ({
       const videoFile = await response.blob()
 
       const fileName = videoSrc.split("/").pop() || "video"
-      const originalFormat = videoFile.type.split("/")[1]?.split(";")[0] || "mp4"
+      const originalFormat =
+        videoFile.type.split("/")[1]?.split(";")[0] || "mp4"
 
       let outputFormat = originalFormat
       if (!["mp4", "webm"].includes(outputFormat.toLowerCase())) {
@@ -233,7 +240,7 @@ const ExportButton = ({
         disabled={isSaving}
         className="flex h-full w-14 items-center justify-center rounded-lg bg-white/10 transition-colors hover:bg-white/15 active:bg-white/20 disabled:opacity-50"
         style={{
-          backdropFilter: 'blur(8px)',
+          backdropFilter: "blur(8px)",
         }}
       >
         <AnimatePresence mode="wait">
@@ -409,7 +416,7 @@ export const TrimmerContainer = ({
         onMouseDown={onSeekMouseDown}
         onMouseUp={onSeekMouseUp}
       />
-      <Frames isDirty={true} />
+      <Frames />
       <TimeIndicator duration={duration} />
     </motion.div>
   )

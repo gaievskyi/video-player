@@ -46,7 +46,6 @@ export const VideoEditor = () => {
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
   const [videoData, setVideoData] = useState<VideoData | null>(() => {
     if (!videoId) return null
-
     const decodedVideoId = decodeURIComponent(videoId)
     const exampleVideo = Object.values(EXAMPLE_VIDEOS).find(
       (v) => v.id === decodedVideoId,

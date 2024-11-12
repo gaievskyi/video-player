@@ -4,6 +4,8 @@ import {
   useEffect,
   useState,
   type ReactNode,
+  useCallback,
+  useMemo,
 } from "react"
 
 type RouterContextType = {
@@ -12,14 +14,18 @@ type RouterContextType = {
   params: Record<string, string>
   path: string
   isReady: boolean
+  push: (path: string) => void
+  prefetch: (path: string) => void
 }
 
-const RouterContext = createContext<RouterContextType>({
+export const RouterContext = createContext<RouterContextType>({
   navigate: () => {},
   goBack: () => {},
   params: {},
   path: "",
   isReady: false,
+  push: () => {},
+  prefetch: () => {},
 })
 
 export const useRouter = () => useContext(RouterContext)
@@ -32,6 +38,7 @@ type Route = {
 type RouterProps = {
   routes: Route[]
   notFound?: ReactNode
+  children?: ReactNode
 }
 
 const NotFoundPage = () => (
@@ -89,9 +96,12 @@ const matchRoute = (routePath: string, currentPath: string) => {
 export const Router = ({
   routes,
   notFound = <NotFoundPage />,
+  children,
 }: RouterProps) => {
   const [path, setPath] = useState(window.location.pathname)
   const [isReady, setIsReady] = useState(false)
+
+  const prefetchCache = useMemo(() => new Set<string>(), []);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -104,22 +114,51 @@ export const Router = ({
     return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
-  const navigate = (newPath: string) => {
+  const navigate = useCallback((newPath: string) => {
     window.history.pushState({}, "", newPath)
     setPath(newPath)
-  }
+  }, [])
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     window.history.back()
-  }
+  }, [])
+
+  const push = useCallback((path: string) => {
+    window.history.pushState({}, "", path)
+    setPath(path)
+  }, [])
+
+  const prefetch = useCallback((path: string) => {
+    if (prefetchCache.has(path)) return;
+    prefetchCache.add(path);
+  }, [prefetchCache])
+
+  const currentParams = useMemo(() => {
+    for (const route of routes) {
+      const params = matchRoute(route.path, path)
+      if (params !== null) {
+        return params;
+      }
+    }
+    return {};
+  }, [routes, path]);
+
+  const value = useMemo(() => ({
+    navigate,
+    goBack,
+    params: currentParams,
+    path,
+    isReady,
+    push,
+    prefetch,
+  }), [navigate, goBack, currentParams, path, isReady, push, prefetch])
 
   for (const route of routes) {
     const params = matchRoute(route.path, path)
     if (params !== null) {
       return (
-        <RouterContext.Provider
-          value={{ navigate, goBack, params, path, isReady }}
-        >
+        <RouterContext.Provider value={value}>
+          {children}
           {route.element}
         </RouterContext.Provider>
       )
@@ -127,9 +166,8 @@ export const Router = ({
   }
 
   return (
-    <RouterContext.Provider
-      value={{ navigate, goBack, params: {}, path, isReady }}
-    >
+    <RouterContext.Provider value={value}>
+      {children}
       {notFound}
     </RouterContext.Provider>
   )

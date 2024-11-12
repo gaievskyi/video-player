@@ -1,37 +1,23 @@
 import { useEffect, useRef, useState } from "react"
-import { type Frame } from "~/lib/video-to-frames"
 import { useFrames } from "./video-editor-context"
 import { cn } from "~/lib/utils"
 
-export const Frames = ({ isDirty }: { isDirty: boolean }) => {
+export const Frames = () => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [frames, setFrames] = useState<Frame[]>([])
   const videoFrames = useFrames()
-
-  // Initialize frames when videoFrames change
-  useEffect(() => {
-    if (videoFrames && videoFrames.length > 0) {
-      setFrames(videoFrames)
-    }
-  }, [videoFrames])
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>()
 
   useEffect(() => {
-    if (!containerRef.current || !frames.length) return
+    if (!containerRef.current || !videoFrames.length) return
 
-    const updateFrameDimensions = (width: number) => {
-      if (width === 0) return
+    const updateFrameDimensions = (containerWidth: number) => {
+      if (containerWidth === 0) return
 
-      const aspectRatio = frames[0].height / frames[0].width
-      const frameWidth = width / frames.length
+      const aspectRatio = videoFrames[0].height / videoFrames[0].width
+      const frameWidth = containerWidth / videoFrames.length
       const frameHeight = frameWidth * aspectRatio
 
-      setFrames((prevFrames) =>
-        prevFrames.map((frame) => ({
-          ...frame,
-          width: frameWidth,
-          height: frameHeight,
-        })),
-      )
+      setDimensions({ width: frameWidth, height: frameHeight })
     }
 
     const resizeObserver = new ResizeObserver((entries) => {
@@ -45,26 +31,25 @@ export const Frames = ({ isDirty }: { isDirty: boolean }) => {
 
     resizeObserver.observe(containerRef.current)
     return () => resizeObserver.disconnect()
-  }, [frames])
+  }, [videoFrames])
 
-  if (!frames.length) return null
+  if (!videoFrames.length) return null
 
   return (
     <div
       ref={containerRef}
       className={cn(
         "absolute inset-0 flex h-full w-full overflow-clip",
-        !isDirty && "rounded-xl",
       )}
     >
-      {frames.map((frame) => {
+      {videoFrames.map((frame) => {
         return (
           <div key={frame.id} className="relative h-full flex-1">
             <img
               src={frame.src}
               alt={`Frame ${frame.id}`}
-              width={frame.width}
-              height={frame.height}
+              width={dimensions?.width}
+              height={dimensions?.height}
               className="h-full w-full object-cover"
               loading="lazy"
               decoding="async"
