@@ -178,34 +178,40 @@ export const VideoUploadInput = ({
           <span className="text-sm text-gray-400">Your uploads</span>
           <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3">
             {uploadedVideos.map((video) => (
-              <button
+              <div
                 key={video.id}
-                onClick={() => onExampleClick(video.filename)}
-                onMouseEnter={() => handleVideoHover(video.filename)}
                 className="group relative aspect-video w-full overflow-hidden rounded-lg border border-[#171717] bg-black/20 transition-all hover:border-gray-500 hover:ring-1 hover:ring-gray-500"
               >
-                <video className="h-full w-full object-cover" muted playsInline>
-                  <source src={video.src} type="video/mp4" />
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-medium text-white">
-                      {video.filename}
-                    </span>
-                    <span className="text-[10px] text-gray-300">
-                      {new Date(video.createdAt).toLocaleDateString()}
-                    </span>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onExampleClick(video.filename)}
+                  onMouseEnter={() => handleVideoHover(video.filename)}
+                  className="h-full w-full cursor-pointer"
+                >
+                  <video className="h-full w-full object-cover" muted playsInline>
+                    <source src={video.src} type="video/mp4" />
+                  </video>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2">
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-medium text-white">
+                        {video.filename}
+                      </span>
+                      <span className="text-[10px] text-gray-300">
+                        {new Date(video.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => handleDelete(e, video.filename)}
+                      className="ml-2 rounded-full p-1.5 text-gray-300 opacity-0 transition-all hover:bg-white/10 hover:text-white group-hover:opacity-100"
+                      title="Remove video"
+                    >
+                      <TrashIcon />
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => handleDelete(e, video.filename)}
-                    className="ml-2 rounded-full p-1.5 text-gray-300 opacity-0 transition-all hover:bg-white/10 hover:text-white group-hover:opacity-100"
-                    title="Remove video"
-                  >
-                    <TrashIcon />
-                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
