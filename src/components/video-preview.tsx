@@ -42,7 +42,7 @@ export const VideoPreview = ({
 
   const [duration, setDuration] = useState(0)
 
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number>(0)
 
   const SEEK_INCREMENT = 5
 
@@ -145,7 +145,7 @@ export const VideoPreview = ({
 
   const onMouseUp: MouseEventHandler = useDebounced(() => {
     play()
-  }, 350)
+  }, 150)
 
   const trimVideo = (): void => {
     if (!videoRef.current) return
@@ -245,29 +245,22 @@ export const VideoPreview = ({
     }
   })
 
-  useEventListener(
-    "timeupdate",
-    () => {
-      if (!videoRef.current) return
-      const video = videoRef.current
+  useEventListener("timeupdate", () => {
+    if (!videoRef.current) return
+    const video = videoRef.current
 
-      if (video.currentTime >= end) {
-        video.currentTime = start
-        if (isPlaying) {
-          video.play().catch(console.error)
-        }
-      } else if (video.currentTime < start) {
-        video.currentTime = start
-        if (isPlaying) {
-          video.play().catch(console.error)
-        }
+    if (video.currentTime >= end) {
+      video.currentTime = start
+      if (isPlaying) {
+        video.play().catch(console.error)
       }
-    },
-    videoRef,
-    {
-      passive: true,
-    },
-  )
+    } else if (video.currentTime < start) {
+      video.currentTime = start
+      if (isPlaying) {
+        video.play().catch(console.error)
+      }
+    }
+  })
 
   useEffect(() => {
     if (!videoRef.current) return
@@ -330,7 +323,9 @@ export const VideoPreview = ({
   const handleExport = () => {
     // Only show export button and handle export if video is trimmed
     if (isVideoTrimmed) {
-      const saveButton = document.querySelector<HTMLButtonElement>('[data-save-button="true"]')
+      const saveButton = document.querySelector<HTMLButtonElement>(
+        '[data-save-button="true"]',
+      )
       if (saveButton) {
         saveButton.click()
       }

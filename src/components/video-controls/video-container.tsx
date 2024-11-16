@@ -8,7 +8,7 @@ import { SeekIndicator } from "./seek-indicator"
 import { VolumeControl } from "./volume-control"
 
 type VideoContainerProps = {
-  videoRef: React.RefObject<HTMLVideoElement>
+  videoRef: React.RefObject<HTMLVideoElement | null>
   isPlaying: boolean
   isMuted: boolean
   seekDirection: "left" | "right" | null

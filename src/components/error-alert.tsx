@@ -4,7 +4,7 @@ import { createPortal } from "react-dom"
 
 type ErrorAlertProps = {
   error: string | null
-  buttonRef: RefObject<HTMLElement>
+  buttonRef: RefObject<HTMLElement | null>
 }
 
 export function ErrorAlert({ error, buttonRef }: ErrorAlertProps) {

@@ -13,7 +13,7 @@ import { TrimmerControl } from "./trimmer-control"
 
 type TrimmerContainerProps = {
   duration: number
-  seekRef: React.RefObject<HTMLInputElement>
+  seekRef: React.RefObject<HTMLInputElement | null>
   onTrimStart: (e: React.MouseEvent | React.TouchEvent) => void
   onTrimEnd: (e: React.MouseEvent | React.TouchEvent) => void
   onTrimComplete: () => void

@@ -22,10 +22,10 @@ export type DebouncedState<T extends (...args: unknown[]) => ReturnType<T>> = ((
 
 export function useDebounced<T extends (...args: unknown[]) => ReturnType<T>>(
   func: T,
-  delay = 500,
+  delay = 300,
   options?: DebounceOptions,
 ): DebouncedState<T> {
-  const debouncedFunc = useRef<ReturnType<typeof debounce>>()
+  const debouncedFunc = useRef<ReturnType<typeof debounce> | null>(null)
 
   useUnmount(() => {
     if (debouncedFunc.current) {
@@ -45,6 +45,9 @@ export function useDebounced<T extends (...args: unknown[]) => ReturnType<T>>(
     }
 
     wrappedFunc.isPending = () => {
+      if (!debouncedFunc.current) return false
+      // eslint-disable-next-line react-compiler/react-compiler
+      // @eslint-disable-next-line react-hooks/rules-of-hooks
       return !!debouncedFunc.current
     }
 
