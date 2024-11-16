@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useFrames } from "./video-editor-context"
-import { cn } from "~/lib/utils"
+import { cn } from "~/lib/cn"
 
 export const Frames = () => {
   const containerRef = useRef<HTMLDivElement>(null)

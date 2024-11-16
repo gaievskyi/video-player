@@ -2,8 +2,8 @@ import type { ComponentProps } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { AttachFileIcon } from "~/components/icons/attach-file-icon"
 import { TrashIcon } from "~/components/icons/trash-icon"
-import type { UploadedVideo } from "~/lib/indexed-db"
-import { videoService } from "~/lib/video-service"
+import type { UploadedVideo } from "~/services/indexed-db-service"
+import { videoService } from "~/services/video-service"
 
 const EXAMPLE_VIDEOS = {
   bunny: {
@@ -53,8 +53,7 @@ export const VideoUploadInput = ({
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    await onChange(event)
-    // Refresh the list after upload
+    onChange(event)
     await loadUploadedVideos()
   }
 
@@ -62,7 +61,9 @@ export const VideoUploadInput = ({
     videoService.preloadVideo(filename).catch(console.error)
   }, [])
 
-  const handleMouseLeave = (videoRef: React.RefObject<HTMLVideoElement>) => {
+  const handleMouseLeave = (
+    videoRef: React.RefObject<HTMLVideoElement | null>,
+  ) => {
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
@@ -71,7 +72,7 @@ export const VideoUploadInput = ({
   }
 
   const handleMouseEnter = useCallback(
-    (videoRef: React.RefObject<HTMLVideoElement>, filename?: string) => {
+    (videoRef: React.RefObject<HTMLVideoElement | null>, filename?: string) => {
       if (videoRef.current) {
         videoRef.current.play()
       }
@@ -189,7 +190,11 @@ export const VideoUploadInput = ({
                   onMouseEnter={() => handleVideoHover(video.filename)}
                   className="h-full w-full cursor-pointer"
                 >
-                  <video className="h-full w-full object-cover" muted playsInline>
+                  <video
+                    className="h-full w-full object-cover"
+                    muted
+                    playsInline
+                  >
                     <source src={video.src} type="video/mp4" />
                   </video>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

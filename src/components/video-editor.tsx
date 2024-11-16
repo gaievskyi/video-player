@@ -2,12 +2,12 @@ import { AnimatePresence } from "framer-motion"
 import { useEffect, useState, type ChangeEventHandler } from "react"
 import { Spinner } from "~/components/spinner"
 import { useRouter } from "~/lib/router"
-import { videoService } from "~/lib/video-service"
 import {
   VideoToFrames,
   VideoToFramesMethod,
   type Frame,
 } from "~/lib/video-to-frames"
+import { videoService } from "~/services/video-service"
 import { VideoEditorContextProvider } from "./video-editor-context"
 import { VideoPreview } from "./video-preview"
 import { VideoUploadInput } from "./video-upload-input"
@@ -112,7 +112,6 @@ export const VideoEditor = () => {
       }
 
       try {
-        // Always get fresh video data to ensure valid blob URLs
         const video = await videoService.getVideo(decodedVideoId)
         if (video && isMounted) {
           setVideoData({

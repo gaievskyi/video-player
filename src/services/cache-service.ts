@@ -1,5 +1,5 @@
-import type { UploadedVideo } from "./indexed-db"
-import type { Frame } from "./video-to-frames"
+import type { Frame } from "../lib/video-to-frames"
+import type { UploadedVideo } from "./indexed-db-service"
 
 type CachedVideoData = {
   video: {

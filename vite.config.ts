@@ -3,9 +3,15 @@ import path from "path"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
+const ReactCompilerConfig = { /* ... */ };
+
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
+      },
+    }),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],

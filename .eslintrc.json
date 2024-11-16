@@ -5,9 +5,13 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:react-hooks/recommended"
   ],
+  "plugins": [
+    "eslint-plugin-react-compiler"
+  ],
   "ignorePatterns": ["dist", ".eslintrc.cjs"],
   "parser": "@typescript-eslint/parser",
   "rules": {
+    "react-compiler/react-compiler": "error",
     "no-restricted-properties": [
       "error",
       {

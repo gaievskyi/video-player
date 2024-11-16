@@ -1,10 +1,10 @@
-import { cacheService } from "./cache-service"
-import { dbService, type UploadedVideo } from "./indexed-db"
 import {
   VideoToFrames,
   VideoToFramesMethod,
   type Frame,
-} from "./video-to-frames"
+} from "../lib/video-to-frames"
+import { cacheService } from "./cache-service"
+import { dbService, type UploadedVideo } from "./indexed-db-service"
 
 type CachedVideo = {
   url: string

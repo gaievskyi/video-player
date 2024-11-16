@@ -1,12 +1,16 @@
 import {
   createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
+  memo,
+  use,
   useCallback,
   useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
 } from "react"
+import { useEventListener } from "~/hooks/use-event-listener"
+import { ErrorBoundary } from "./error-boundary"
+import { ErrorPage } from "./error-page"
 
 type RouterContextType = {
   navigate: (path: string) => void
@@ -28,11 +32,17 @@ export const RouterContext = createContext<RouterContextType>({
   prefetch: () => {},
 })
 
-export const useRouter = () => useContext(RouterContext)
+export const useRouter = () => use(RouterContext)
+
+type ErrorPageProps = {
+  error?: Error
+  reset?: () => void
+}
 
 type Route = {
   path: string
   element: ReactNode
+  errorElement?: ReactNode | ((props: ErrorPageProps) => ReactNode)
 }
 
 type RouterProps = {
@@ -40,6 +50,46 @@ type RouterProps = {
   notFound?: ReactNode
   children?: ReactNode
 }
+
+type LinkProps = ComponentProps<"a"> & { prefetch?: boolean; href: string }
+
+export const Link = memo(function Link({
+  href,
+  children,
+  prefetch = true,
+  className,
+  onClick,
+}: LinkProps) {
+  const router = useRouter()
+  const [isPrefetched, setIsPrefetched] = useState(false)
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault()
+      if (onClick) onClick(e)
+      router.push(href)
+    },
+    [onClick, router, href],
+  )
+
+  const handleMouseEnter = useCallback(() => {
+    if (prefetch && !isPrefetched) {
+      router.prefetch(href)
+      setIsPrefetched(true)
+    }
+  }, [prefetch, isPrefetched, router, href])
+
+  return (
+    <a
+      href={href}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      className={className}
+    >
+      {children}
+    </a>
+  )
+})
 
 const NotFoundPage = () => (
   <div className="flex h-[100svh] w-full flex-col items-center justify-center gap-4 text-center">
@@ -101,18 +151,12 @@ export const Router = ({
   const [path, setPath] = useState(window.location.pathname)
   const [isReady, setIsReady] = useState(false)
 
-  const prefetchCache = useMemo(() => new Set<string>(), []);
+  const prefetchCache = useMemo(() => new Set<string>(), [])
 
-  useEffect(() => {
-    const handlePopState = () => {
-      setPath(window.location.pathname)
-    }
-
-    window.addEventListener("popstate", handlePopState)
+  useEventListener("popstate", () => {
+    setPath(window.location.pathname)
     setIsReady(true)
-
-    return () => window.removeEventListener("popstate", handlePopState)
-  }, [])
+  })
 
   const navigate = useCallback((newPath: string) => {
     window.history.pushState({}, "", newPath)
@@ -128,30 +172,36 @@ export const Router = ({
     setPath(path)
   }, [])
 
-  const prefetch = useCallback((path: string) => {
-    if (prefetchCache.has(path)) return;
-    prefetchCache.add(path);
-  }, [prefetchCache])
+  const prefetch = useCallback(
+    (path: string) => {
+      if (prefetchCache.has(path)) return
+      prefetchCache.add(path)
+    },
+    [prefetchCache],
+  )
 
   const currentParams = useMemo(() => {
     for (const route of routes) {
       const params = matchRoute(route.path, path)
       if (params !== null) {
-        return params;
+        return params
       }
     }
-    return {};
-  }, [routes, path]);
+    return {}
+  }, [routes, path])
 
-  const value = useMemo(() => ({
-    navigate,
-    goBack,
-    params: currentParams,
-    path,
-    isReady,
-    push,
-    prefetch,
-  }), [navigate, goBack, currentParams, path, isReady, push, prefetch])
+  const value = useMemo(
+    () => ({
+      navigate,
+      goBack,
+      params: currentParams,
+      path,
+      isReady,
+      push,
+      prefetch,
+    }),
+    [navigate, goBack, currentParams, path, isReady, push, prefetch],
+  )
 
   for (const route of routes) {
     const params = matchRoute(route.path, path)
@@ -159,16 +209,27 @@ export const Router = ({
       return (
         <RouterContext.Provider value={value}>
           {children}
-          {route.element}
+          <ErrorBoundary
+            fallback={
+              route.errorElement ??
+              ((props: ErrorPageProps) => <ErrorPage {...props} />)
+            }
+          >
+            {route.element}
+          </ErrorBoundary>
         </RouterContext.Provider>
       )
     }
   }
 
   return (
-    <RouterContext.Provider value={value}>
+    <RouterContext value={value}>
       {children}
-      {notFound}
-    </RouterContext.Provider>
+      <ErrorBoundary
+        fallback={(props: ErrorPageProps) => <ErrorPage {...props} />}
+      >
+        {notFound}
+      </ErrorBoundary>
+    </RouterContext>
   )
 }

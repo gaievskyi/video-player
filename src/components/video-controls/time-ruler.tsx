@@ -1,6 +1,5 @@
 import debounce from "lodash.debounce"
-import { useState } from "react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { formatTime } from "~/components/video-controls/trimmer-container"
 
 export const useResponsiveRuler = (duration: number) => {
